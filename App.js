@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity } from 'react-native';
 import {send, subscribe} from 'react-native-training-chat-server';
+import Header from './Header';
 
 const NAME = 'Your Name252345';
 const CHANNEL = 'Reactivate';
@@ -37,6 +38,8 @@ export default class App extends React.Component {
   render() {
     return (
       <View style={styles.container}>
+        <Header title={CHANNEL} />
+
         <FlatList inverted data={this.state.messages} renderItem={this.renderItem} />
 
         <KeyboardAvoidingView behavior="padding">
