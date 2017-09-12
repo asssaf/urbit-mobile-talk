@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity } from 'react-native';
+    TouchableOpacity, Image } from 'react-native';
 import {send, subscribe} from 'react-native-training-chat-server';
 import Header from './Header';
 
 const NAME = 'Your Name252345';
 const CHANNEL = 'Reactivate';
+const AVATAR = 'https://pbs.twimg.com/profile_images/806501058679816192/ZHFWIF-z_400x400.jpg';
 
 export default class App extends React.Component {
   state = {
@@ -26,6 +27,7 @@ export default class App extends React.Component {
     await send({
       channel: CHANNEL,
       sender: NAME,
+      avatar: AVATAR,
       message: this.state.typing
     });
 
@@ -64,8 +66,11 @@ export default class App extends React.Component {
   renderItem({item}) {
     return (
       <View style={styles.row}>
-        <Text style={styles.sender}>{item.sender}</Text>
-        <Text style={styles.message}>{item.message}</Text>
+        <Image style={styles.avatar} source={{uri: item.avatar}} />
+        <View style={styles.rowText}>
+          <Text style={styles.sender}>{item.sender}</Text>
+          <Text style={styles.message}>{item.message}</Text>
+        </View>
       </View>
     );
   }
@@ -104,5 +109,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     padding: 20,
+  },
+  avatar: {
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    marginRight: 10,
+  },
+  rowText: {
+    flex: 1,
   },
 });
