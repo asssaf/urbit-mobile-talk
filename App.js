@@ -3,10 +3,15 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image } from 'react-native';
 import {send, subscribe} from 'react-native-training-chat-server';
 import Header from './Header';
+import Urbit from "./Urbit";
 
 const NAME = 'Your Name252345';
 const CHANNEL = 'Reactivate';
 const AVATAR = 'https://pbs.twimg.com/profile_images/806501058679816192/ZHFWIF-z_400x400.jpg';
+
+const USER = ''
+const SERVER = 'https://' + USER + '.urbit.org'
+const CODE = ''
 
 export default class App extends React.Component {
   state = {
@@ -14,10 +19,22 @@ export default class App extends React.Component {
     messages: [],
   };
 
+  urbit = new Urbit(SERVER, USER);
+
   componentDidMount() {
     subscribe(CHANNEL, messages => {
       this.setState({messages});
     });
+
+    this.urbit.authenticate(CODE)
+        .then(v => {
+          this.urbit.subscribe(USER, 'pwgen', '/pwgen/response', data => {
+            console.log("change!");
+            console.log(data)
+            this.urbit.unsubscribe(USER, 'pwgen', '/pwgen/response')
+          })
+          this.urbit.poke('pwgen', 'pwgen-pwreq', '/', 48)
+        })
   }
 
   async sendMessage() {
