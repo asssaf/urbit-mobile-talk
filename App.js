@@ -37,7 +37,7 @@ export default class App extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <FlatList data={this.state.messages} renderItem={this.renderItem} />
+        <FlatList inverted data={this.state.messages} renderItem={this.renderItem} />
 
         <KeyboardAvoidingView behavior="padding">
           <View style={styles.footer}>
