@@ -21,7 +21,6 @@
   "dependencies": {
     "expo": "^20.0.0",
     "react": "16.0.0-alpha.12",
-    "react-native": "^0.47.0",
-    "react-native-training-chat-server": "^1.1.2"
+    "react-native": "^0.47.0"
   }
 }
