@@ -22,7 +22,10 @@ export default class App extends React.Component {
   urbitAnon = null
 
   componentDidMount() {
-    this.loadState('user').then(v => this.setState({ user: v }))
+    this.loadState('user').then(v => {
+      this.setState({ user: v })
+      this.checkLogin();
+    })
     this.loadState('stationShip').then(v => this.setState({ stationShip: v }))
     this.loadState('stationChannel').then(v => this.setState({ stationChannel: v }))
   }
@@ -36,6 +39,17 @@ export default class App extends React.Component {
       await AsyncStorage.setItem('@urbit-mobile-talk:' + key, value);
     } catch (error) {
       console.log(error)
+    }
+  }
+
+  async checkLogin() {
+    if (!this.urbit) {
+      var server = 'https://' + this.state.user + '.urbit.org'
+      this.urbit = new Urbit(server, this.state.user)
+      var result = await this.urbit.isAuthenticated()
+      if (result) {
+        this.setState({ loggedIn: true })
+      }
     }
   }
 
