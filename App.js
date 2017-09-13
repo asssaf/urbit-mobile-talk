@@ -5,9 +5,6 @@ import {send, subscribe} from 'react-native-training-chat-server';
 import Header from './Header';
 import Urbit from "./Urbit";
 
-const NAME = 'Your Name252345';
-const AVATAR = 'https://pbs.twimg.com/profile_images/806501058679816192/ZHFWIF-z_400x400.jpg';
-
 const USER = ''
 const SERVER = 'https://' + USER + '.urbit.org'
 const CODE = ''
@@ -42,7 +39,6 @@ export default class App extends React.Component {
               if (speech.lin) {
                 var item = {
                   key: t.thought.serial,
-                  avatar: AVATAR,
                   sender: ship,
                   message: speech.lin.txt
                 }
@@ -127,11 +123,17 @@ export default class App extends React.Component {
   }
 
   renderItem({item}) {
+    var avatarUrl = 'https://robohash.org/~.~'+item.sender
+    var sender = item.sender
+    if (sender.length == 56) {
+      sender = sender.substring(0, 6) + "_" + sender.substring(50)
+    }
+
     return (
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{uri: item.avatar}} />
+        <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
-          <Text style={styles.sender}>~{item.sender}</Text>
+          <Text style={styles.sender}>~{sender}</Text>
           <Text style={styles.message}>{item.message}</Text>
         </View>
       </View>
