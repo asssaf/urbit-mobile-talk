@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity, Image } from 'react-native';
+    TouchableOpacity, Image, AsyncStorage } from 'react-native';
 import Header from './Header';
 import Urbit from "./Urbit";
 
@@ -21,11 +21,33 @@ export default class App extends React.Component {
   urbit = null
   urbitAnon = null
 
+  componentDidMount() {
+    this.loadState('user').then(v => this.setState({ user: v }))
+    this.loadState('stationShip').then(v => this.setState({ stationShip: v }))
+    this.loadState('stationChannel').then(v => this.setState({ stationChannel: v }))
+  }
+
+  loadState(key) {
+    return AsyncStorage.getItem('@urbit-mobile-talk:' + key)
+  }
+
+  async saveState(key, value) {
+    try {
+      await AsyncStorage.setItem('@urbit-mobile-talk:' + key, value);
+      console.log('save @urbit-mobile-talk:' + key + '  - ' + value)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   async doLogin() {
     var server = 'https://' + this.state.user + '.urbit.org'
     this.urbit = new Urbit(server, this.state.user)
     var result = await this.urbit.authenticate(this.state.code)
     if (result) {
+      // store the user for next time
+      this.saveState('user', this.state.user)
+
       this.setState({ loggedIn: true, formError: "" })
 
     } else {
@@ -40,6 +62,9 @@ export default class App extends React.Component {
     if (!result) {
       this.setState({ formError: "Failed to join " + this.formatStation() })
     }
+
+    this.saveState('stationShip', this.state.stationShip)
+    this.saveState('stationChannel', this.state.stationChannel)
 
     this.urbitAnon.subscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel, data => {
       var newMessages = this.state.messages.slice()
