@@ -22,11 +22,16 @@ export default class App extends React.Component {
   };
 
   urbit = new Urbit(SERVER, USER);
+  urbitAnon = new Urbit('https://' + CHANNEL_SHIP + ".urbit.org", null)
 
   componentDidMount() {
+    // authenticated client for pokes
     this.urbit.authenticate(CODE)
+
+    // unauthenticated client for subscribe
+    this.urbitAnon.isAuthenticated()
       .then(v => {
-        this.urbit.subscribe(CHANNEL_SHIP, 'talk', '/afx/' + CHANNEL, data => {
+        this.urbitAnon.subscribe(CHANNEL_SHIP, 'talk', '/afx/' + CHANNEL, data => {
           var newMessages = this.state.messages.slice()
 
           if (data.grams) {

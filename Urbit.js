@@ -130,7 +130,7 @@ export default class Urbit {
 
   async subscribe(ship, app, path, callback) {
     try {
-      var url = this.server + "/~/is/~" + this.user + "/" + app + path + "/.json?PUT"
+      var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?PUT"
       let response = await fetch(url, {
         credentials: "same-origin",
         headers: {
