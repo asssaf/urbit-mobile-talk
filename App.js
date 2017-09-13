@@ -6,12 +6,14 @@ import Header from './Header';
 import Urbit from "./Urbit";
 
 const NAME = 'Your Name252345';
-const CHANNEL = 'Reactivate';
 const AVATAR = 'https://pbs.twimg.com/profile_images/806501058679816192/ZHFWIF-z_400x400.jpg';
 
 const USER = ''
 const SERVER = 'https://' + USER + '.urbit.org'
 const CODE = ''
+
+const CHANNEL_SHIP = USER
+const CHANNEL = 'sandbox'
 
 export default class App extends React.Component {
   state = {
@@ -22,31 +24,70 @@ export default class App extends React.Component {
   urbit = new Urbit(SERVER, USER);
 
   componentDidMount() {
-    subscribe(CHANNEL, messages => {
-      this.setState({messages});
-    });
-
     this.urbit.authenticate(CODE)
-        .then(v => {
-          this.urbit.subscribe(USER, 'pwgen', '/pwgen/response', data => {
-            console.log("change!");
-            console.log(data)
-            this.urbit.unsubscribe(USER, 'pwgen', '/pwgen/response')
-          })
-          this.urbit.poke('pwgen', 'pwgen-pwreq', '/', 48)
+      .then(v => {
+        this.urbit.subscribe(CHANNEL_SHIP, 'talk', '/afx/' + CHANNEL, data => {
+          var newMessages = this.state.messages.slice()
+
+          if (data.grams) {
+            data.grams.tele.forEach(t => {
+              var ship = t.ship
+              var speech = t.thought.statement.speech
+              var ts = t.thought.statement.date
+              if (speech.lin) {
+                var item = {
+                  key: t.thought.serial,
+                  avatar: AVATAR,
+                  sender: ship,
+                  message: speech.lin.txt
+                }
+                newMessages.push(item)
+              } else {
+                console.log("Unhandled speech: " + speech)
+              }
+            })
+
+            this.setState({
+              messages: newMessages
+            })
+          }
         })
+      })
   }
 
   async sendMessage() {
-    // send message to our channel, with sender name.
-    // the `await` keyword means this function execution
-    // waits until the message is sent
-    await send({
-      channel: CHANNEL,
-      sender: NAME,
-      avatar: AVATAR,
-      message: this.state.typing
-    });
+    var speech = {
+      lin: {
+        txt: this.state.typing,
+        say: true
+      }
+    };
+
+    var aud = "~" + CHANNEL_SHIP + "/" + CHANNEL
+    var audi = {}
+    audi[aud] = {
+      envelope: {
+        visible: true,
+        sender: null
+      },
+      delivery: "pending"
+    }
+
+    var message = {
+        serial: this.urbit.uuid32(),
+        audience: audi,
+        statement: {
+          bouquet: [],
+          speech: speech,
+          date: Date.now()
+        }
+    }
+
+    this.urbit.poke('talk', 'talk-command', '/', {
+      publish: [
+        message
+      ]
+    })
 
     // set the component state (clears text input)
     this.setState({
@@ -85,7 +126,7 @@ export default class App extends React.Component {
       <View style={styles.row}>
         <Image style={styles.avatar} source={{uri: item.avatar}} />
         <View style={styles.rowText}>
-          <Text style={styles.sender}>{item.sender}</Text>
+          <Text style={styles.sender}>~{item.sender}</Text>
           <Text style={styles.message}>{item.message}</Text>
         </View>
       </View>

@@ -92,6 +92,8 @@ export default class Urbit {
         return false
       }
 
+      this.oryx = responseJson.oryx
+      this.ixor = responseJson.ixor
       console.log("Authenticated successfully")
       return true
 
@@ -219,7 +221,9 @@ export default class Urbit {
         var responseJson = await response.json()
         if (!responseJson.beat) {
           // got a change
-          callback(responseJson.data.json)
+          if (responseJson.type == 'rush') {
+            callback(responseJson.data.json)
+          }
           this.event++
         }
 
@@ -230,4 +234,15 @@ export default class Urbit {
     }
   }
 
+  uuid32() {
+    var _str, i, j, str;
+    str = "0v";
+    str += Math.ceil(Math.random() * 8) + ".";
+    for (i = j = 0; j <= 5; i = ++j) {
+      _str = Math.ceil(Math.random() * 10000000).toString(32);
+      _str = ("00000" + _str).substr(-5, 5);
+      str += _str + ".";
+    }
+    return str.slice(0, -1);
+  }
 }
