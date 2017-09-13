@@ -34,7 +34,6 @@ export default class App extends React.Component {
   async saveState(key, value) {
     try {
       await AsyncStorage.setItem('@urbit-mobile-talk:' + key, value);
-      console.log('save @urbit-mobile-talk:' + key + '  - ' + value)
     } catch (error) {
       console.log(error)
     }
