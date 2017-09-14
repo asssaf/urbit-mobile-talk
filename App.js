@@ -130,7 +130,10 @@ export default class App extends React.Component {
         item["message"] = ' '
       }
 
-      if (type == 'exp') {
+      if (type == 'lin' && !speech.lin.say) {
+        item["style"] = styles.messageAct
+
+      } else if (type == 'exp') {
         item["style"] = styles.messageCode
       }
 
@@ -142,6 +145,21 @@ export default class App extends React.Component {
       var i
       for (i = 0; i < subItems.length; ++i) {
         this.processSpeech(messages, serial + i, sender, subItems[i])
+      }
+
+    } else if (type == 'fat') {
+      var subMessages = []
+      this.processSpeech(subMessages, serial, sender, speech.fat.taf)
+      item = subMessages[0]
+      if (speech.fat.tor.text) {
+        item.attachment = speech.fat.tor.text
+
+      } else if (speech.fat.tor.tank) {
+        item.attachment = speech.fat.tor.tank.join('\n')
+
+      } else if (speech.fat.tor.name) {
+        //TODO add name label
+        item.attachment = speech.fat.tor.name.mon
       }
 
     } else {
@@ -342,6 +360,11 @@ export default class App extends React.Component {
         <View style={styles.rowText}>
           <Text style={styles.sender}>~{sender}</Text>
           <Autolink style={item.style} text={item.message} />
+          {item.attachment &&
+            <View style={styles.attachment}>
+              <Text>{item.attachment}</Text>
+            </View>
+          }
         </View>
       </View>
     );
@@ -361,9 +384,19 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 18,
   },
+  messageAct: {
+    fontSize: 18,
+    fontStyle: 'italic'
+  },
   messageCode: {
     fontSize: 18,
     fontFamily: 'monospace'
+  },
+  attachment: {
+    borderColor: 'black',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10
   },
   sender: {
     fontWeight: 'bold',
