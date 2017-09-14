@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage } from 'react-native';
+import Autolink from 'react-native-autolink';
 import Header from './Header';
 import Urbit from "./Urbit";
 
@@ -87,21 +88,21 @@ export default class App extends React.Component {
           var ship = t.ship
           var speech = t.thought.statement.speech
           var ts = t.thought.statement.date
-          if (speech.lin) {
+          var type = Object.keys(speech)[0]
+          if (type == 'lin' || type == 'url') {
             var item = {
               key: t.thought.serial,
               sender: ship,
-              message: speech.lin.txt
+              message: speech[type].txt,
             }
             newMessages.push(item)
 
           } else {
-            var type = Object.keys(speech)[0]
             console.log("Unhandled speech: " + type)
             var item = {
               key: t.thought.serial,
               sender: ship,
-              message: 'Unhandled speech: %' + type
+              message: 'Unhandled speech: %' + type,
             }
             newMessages.push(item)
           }
@@ -287,6 +288,7 @@ export default class App extends React.Component {
 
   renderItem({item}) {
     var avatarUrl = 'https://robohash.org/~.~'+item.sender
+
     var sender = item.sender
     if (sender.length == 56) {
       sender = sender.substring(0, 6) + "_" + sender.substring(50)
@@ -297,7 +299,7 @@ export default class App extends React.Component {
         <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
           <Text style={styles.sender}>~{sender}</Text>
-          <Text style={styles.message}>{item.message}</Text>
+          <Autolink style={styles.message} text={item.message} />
         </View>
       </View>
     );
