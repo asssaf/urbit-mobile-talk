@@ -10,6 +10,7 @@ export default class App extends React.Component {
     inChannel: false,
     loading: true,
     formError: "",
+    formStatusStyle: styles.formLabel,
     typing: "",
     user: "",
     code: "",
@@ -54,6 +55,7 @@ export default class App extends React.Component {
   }
 
   async doLogin() {
+    this.setState({ formError: "Connecting...", formStatusStyle: styles.formLabel })
     var server = 'https://' + this.state.user + '.urbit.org'
     this.urbit = new Urbit(server, this.state.user)
     var result = await this.urbit.authenticate(this.state.code)
@@ -64,22 +66,19 @@ export default class App extends React.Component {
       this.setState({ loggedIn: true, formError: "" })
 
     } else {
-      this.setState({ formError: "Failed to login"})
+      this.setState({ formError: "Failed to login", formStatusStyle: styles.formLabel })
     }
   }
 
   async doJoin() {
-    var server = 'https://' + this.state.channelShip + '.urbit.org'
+    this.setState({ formError: "Joining...", formStatusStyle: styles.formLabel })
+    var server = 'https://' + this.state.stationShip + '.urbit.org'
     this.urbitAnon = new Urbit(server, null)
-    var result = await this.urbitAnon.isAuthenticated()
-    if (!result) {
-      this.setState({ formError: "Failed to join " + this.formatStation() })
-    }
 
-    this.saveState('stationShip', this.state.stationShip)
-    this.saveState('stationChannel', this.state.stationChannel)
+    // create a session
+    await this.urbitAnon.isAuthenticated()
 
-    this.urbitAnon.subscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel, data => {
+    res = await this.urbitAnon.subscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel, data => {
       var newMessages = this.state.messages.slice()
 
       if (data.grams) {
@@ -105,7 +104,18 @@ export default class App extends React.Component {
         })
       }
     })
-    this.setState({ inChannel: true })
+
+    if (!res) {
+      this.setState({
+        formError: "Failed to join " + this.formatStation(),
+        formStatusStyle: styles.formError
+      })
+
+    } else {
+      this.setState({ inChannel: true })
+      this.saveState('stationShip', this.state.stationShip)
+      this.saveState('stationChannel', this.state.stationChannel)
+    }
   }
 
   async sendMessage() {
@@ -182,7 +192,7 @@ export default class App extends React.Component {
           </View>
 
           <View style={styles.formRow}>
-            <Text style={styles.formError}>{this.state.formError}</Text>
+            <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
           </View>
 
           <TouchableOpacity onPress={this.doLogin.bind(this)}>
@@ -220,7 +230,7 @@ export default class App extends React.Component {
           </View>
 
           <View style={styles.formRow}>
-            <Text style={styles.formError}>{this.state.formError}</Text>
+            <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
           </View>
 
           <TouchableOpacity onPress={this.doJoin.bind(this)}>
