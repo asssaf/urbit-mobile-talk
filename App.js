@@ -3,18 +3,19 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage } from 'react-native';
 import Autolink from 'react-native-autolink';
 import Header from './Header';
+import Login from './Login';
 import Urbit from "./Urbit";
 
 export default class App extends React.Component {
   state = {
     loggedIn: false,
+    loggedOut: false,
     inChannel: false,
     loading: true,
     formError: "",
     formStatusStyle: styles.formLabel,
     typing: "",
     user: "",
-    code: "",
     stationShip: "",
     stationChannel: "",
     messages: [],
@@ -25,8 +26,7 @@ export default class App extends React.Component {
 
   componentDidMount() {
     this.loadState('user').then(v => {
-      this.setState({ user: v })
-      this.checkLogin();
+      this.setState({ user: v, loading: false })
     })
     this.loadState('stationShip').then(v => this.setState({ stationShip: v }))
     this.loadState('stationChannel').then(v => this.setState({ stationChannel: v }))
@@ -44,33 +44,12 @@ export default class App extends React.Component {
     }
   }
 
-  async checkLogin() {
-    if (!this.urbit) {
-      this.setState({ formError: "Reestablishing session...", formStatusStyle: styles.formLabel })
-      var server = 'https://' + this.state.user + '.urbit.org'
-      this.urbit = new Urbit(server, this.state.user)
-      var result = await this.urbit.isAuthenticated()
-      this.setState({ formError: "" })
-      if (result) {
-        this.setState({ loggedIn: true })
-      }
-    }
-  }
+  handleLogin(urbit, user) {
+    this.urbit = urbit
+    this.setState({ user: user, loggedIn: true })
 
-  async doLogin() {
-    this.setState({ formError: "Connecting...", formStatusStyle: styles.formLabel })
-    var server = 'https://' + this.state.user + '.urbit.org'
-    this.urbit = new Urbit(server, this.state.user)
-    var result = await this.urbit.authenticate(this.state.code)
-    if (result) {
-      // store the user for next time
-      this.saveState('user', this.state.user)
-
-      this.setState({ loggedIn: true, formError: "" })
-
-    } else {
-      this.setState({ formError: "Failed to login", formStatusStyle: styles.formError })
-    }
+    // store the user for next time
+    this.saveState('user', this.state.user)
   }
 
   async doLogout() {
@@ -79,7 +58,7 @@ export default class App extends React.Component {
       console.log("Failed to logout")
     }
 
-    this.setState({ loggedIn: false })
+    this.setState({ loggedIn: false, loggedOut: true })
   }
 
   async doJoin() {
@@ -244,42 +223,21 @@ export default class App extends React.Component {
   }
 
   render() {
-    if (!this.state.loggedIn) {
+    if (this.state.loading) {
       return (
         <View style={styles.container}>
-          <Header title="Login to your Urbit" />
-
-          <View style={styles.formRow}>
-            <Text style={styles.formLabel}>User</Text>
-            <TextInput
-              value={this.state.user}
-              onChangeText={text => this.setState({user: text.trim()})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="zod"
-            />
-          </View>
-
-          <View style={styles.formRow}>
-            <Text style={styles.formLabel}>Code</Text>
-            <TextInput
-              secureTextEntry={true}
-              value={this.state.code}
-              onChangeText={text => this.setState({code: text.trim()})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="code"
-            />
-          </View>
-
-          <View style={styles.formRow}>
-            <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
-          </View>
-
-          <TouchableOpacity onPress={this.doLogin.bind(this)}>
-            <Text style={styles.send}>Login</Text>
-          </TouchableOpacity>
+          <Text>Loading...</Text>
         </View>
+      );
+    }
+
+    if (!this.state.loggedIn) {
+      return (
+        <Login
+          user={this.state.user}
+          onLogin={this.handleLogin.bind(this)}
+          loggedOut={this.loggedOut}
+        />
       );
     }
 
