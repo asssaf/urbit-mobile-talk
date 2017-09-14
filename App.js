@@ -98,10 +98,15 @@ export default class App extends React.Component {
           item["sender"] = t.ship
           item["ts"] = t.thought.statement.date
           item["key"] = t.thought.serial
+          item["style"] = styles.message
           var speech = t.thought.statement.speech
           var type = Object.keys(speech)[0]
-          if (type == 'lin' || type == 'url') {
+          if (type == 'lin' || type == 'url' || type == 'exp') {
             item["message"] = speech[type].txt
+
+            if (type == 'exp') {
+              item["style"] = styles.messageCode
+            }
 
           } else {
             console.log("Unhandled speech: " + type)
@@ -314,7 +319,7 @@ export default class App extends React.Component {
         <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
           <Text style={styles.sender}>~{sender}</Text>
-          <Autolink style={styles.message} text={item.message} />
+          <Autolink style={item.style} text={item.message} />
         </View>
       </View>
     );
@@ -333,6 +338,10 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 18,
+  },
+  messageCode: {
+    fontSize: 18,
+    fontFamily: 'monospace'
   },
   sender: {
     fontWeight: 'bold',
