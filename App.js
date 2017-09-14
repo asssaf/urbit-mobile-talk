@@ -195,6 +195,9 @@ export default class App extends React.Component {
   }
 
   async sendMessageText(text) {
+    if (text.trim().length == 0) {
+      return
+    }
     var speech = {
       lin: {
         txt: text,
