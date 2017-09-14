@@ -180,7 +180,7 @@ export default class App extends React.Component {
       console.log("Failed to unsubscribe")
     }
 
-    this.setState({ inChannel: false })
+    this.setState({ inChannel: false, messages: [] })
   }
 
   async sendMessage() {
