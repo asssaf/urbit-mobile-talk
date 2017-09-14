@@ -119,9 +119,20 @@ export default class App extends React.Component {
   }
 
   async sendMessage() {
+    var text = this.state.typing
+    while (text.length > 64) {
+      var first = text.substring(0, 64)
+      text = text.substring(64)
+      await this.sendMessageText(first)
+    }
+
+    await this.sendMessageText(text)
+  }
+
+  async sendMessageText(text) {
     var speech = {
       lin: {
-        txt: this.state.typing,
+        txt: text,
         say: true
       }
     };
