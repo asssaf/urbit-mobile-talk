@@ -88,11 +88,15 @@ export default class App extends React.Component {
       this.setState({ loading: false })
       data.grams.tele.forEach(t => {
         var speech = t.thought.statement.speech
-        this.processSpeech(newMessages,
+        var messages = this.processSpeech(
             t.thought.serial,
             t.thought.statement.date,
             t.ship,
             speech)
+
+        for (var i = 0; i < messages.length; ++i) {
+          this.addMessage(newMessages, messages[i])
+        }
       })
 
       this.setState({
@@ -101,62 +105,86 @@ export default class App extends React.Component {
     }
   }
 
-  processSpeech(messages, serial, date, sender, speech) {
+  addMessage(messages, newMessage) {
+    if (messages.length > 0 && messages[messages.length - 1].sender == newMessage.sender) {
+      item = messages[messages.length - 1]
+      item.messages.push(newMessage.messages[0])
+
+    } else {
+      messages.push(newMessage)
+    }
+  }
+
+  processSpeech(serial, date, sender, speech) {
+    var items = []
+
     var item = {
       key: serial,
       sender: sender,
       ts: date,
+      messages: [],
+    }
+
+    var message = {
+      key: serial,
+      ts: date,
       style: styles.message
     }
+
     var type = Object.keys(speech)[0]
     if (type == 'lin' || type == 'url' || type == 'exp') {
-      item["message"] = speech[type].txt
-      if (!item["message"]) {
-        item["message"] = ' '
-      }
+      message["text"] = speech[type].txt
 
       if (type == 'lin' && !speech.lin.say) {
-        item["style"] = styles.messageAct
+        message["style"] = styles.messageAct
 
       } else if (type == 'exp') {
-        item["style"] = styles.messageCode
+        message["style"] = styles.messageCode
       }
 
     } else if (type == 'app') {
-      item["message"] = speech[type].src + ": " + speech[type].txt
+      message["text"] = speech[type].src + ": " + speech[type].txt
 
     } else if (type == 'mor') {
       var subItems = speech.mor
       var i
       for (i = 0; i < subItems.length; ++i) {
-        this.processSpeech(messages, serial + i, date, sender, subItems[i])
+        items = items.concat(this.processSpeech(serial + "/" + i, date, sender, subItems[i]))
       }
 
+      item = null
+
     } else if (type == 'fat') {
-      var subMessages = []
-      this.processSpeech(subMessages, serial, date, sender, speech.fat.taf)
-      item = subMessages[0]
+      items = this.processSpeech(serial + 1, date, sender, speech.fat.taf)
+      item = null
+      message = items[0].messages[0]
+
       if (speech.fat.tor.text) {
-        item.attachment = speech.fat.tor.text
+        message["attachment"] = speech.fat.tor.text
 
       } else if (speech.fat.tor.tank) {
-        item.attachment = speech.fat.tor.tank.join('\n')
+        message["attachment"] = speech.fat.tor.tank.join('\n')
 
       } else if (speech.fat.tor.name) {
         //TODO add name label
-        item.attachment = speech.fat.tor.name.mon
+        message["attachment"] = speech.fat.tor.name.mon
       }
 
     } else {
       console.log("Unhandled speech: %" + type)
-      item["message"] = 'Unhandled speech: %' + type
+      message["text"] = 'Unhandled speech: %' + type
     }
 
-    if (!item["message"]) {
-      item["message"] = ' '
+    if (!message["text"]) {
+      message["text"] = ' '
     }
 
-    messages.push(item)
+    if (item) {
+      item.messages.push(message)
+      items.push(item)
+    }
+
+    return items
   }
 
   async sendMessage() {
@@ -254,7 +282,7 @@ export default class App extends React.Component {
           <Header title={this.formatStation()} />
         </TouchableOpacity>
 
-        <FlatList inverted data={this.state.messages} renderItem={this.renderItem} />
+        <FlatList data={this.state.messages} renderItem={this.renderItem.bind(this)} />
 
         <KeyboardAvoidingView behavior="padding">
           <View style={styles.footer}>
@@ -285,21 +313,36 @@ export default class App extends React.Component {
 
     var time = new Date(item.ts).toLocaleString();
 
+    var messages = []
+    for (var i = 0; i < item.messages.length; ++i) {
+      messages.push(this.renderItemMessage(item.messages[i]))
+    }
+
     return (
       <View style={styles.row}>
         <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
           <Text style={styles.sender}>~{sender}</Text>
           <Text style={styles.timestamp}>{time}</Text>
-          <Autolink style={item.style} text={item.message} />
-          {item.attachment &&
-            <View style={styles.attachment}>
-              <Text>{item.attachment}</Text>
-            </View>
-          }
+          <View>
+            {messages}
+          </View>
         </View>
       </View>
     );
+  }
+
+  renderItemMessage(message) {
+    return (
+      <View key={message['key']}>
+        <Autolink style={message.style} text={message.text} />
+        {message.attachment &&
+          <View style={styles.attachment}>
+            <Text>{message.attachment}</Text>
+          </View>
+        }
+      </View>
+    )
   }
 }
 
