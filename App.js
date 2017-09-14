@@ -94,27 +94,20 @@ export default class App extends React.Component {
       if (data.grams) {
         this.setState({ loading: false })
         data.grams.tele.forEach(t => {
-          var ship = t.ship
+          var item = {}
+          item["sender"] = t.ship
+          item["ts"] = t.thought.statement.date
+          item["key"] = t.thought.serial
           var speech = t.thought.statement.speech
-          var ts = t.thought.statement.date
           var type = Object.keys(speech)[0]
           if (type == 'lin' || type == 'url') {
-            var item = {
-              key: t.thought.serial,
-              sender: ship,
-              message: speech[type].txt,
-            }
-            newMessages.push(item)
+            item["message"] = speech[type].txt
 
           } else {
             console.log("Unhandled speech: " + type)
-            var item = {
-              key: t.thought.serial,
-              sender: ship,
-              message: 'Unhandled speech: %' + type,
-            }
-            newMessages.push(item)
+            item["message"] = 'Unhandled speech: %' + type
           }
+          newMessages.push(item)
         })
 
         this.setState({
