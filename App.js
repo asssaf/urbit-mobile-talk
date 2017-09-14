@@ -94,25 +94,8 @@ export default class App extends React.Component {
       if (data.grams) {
         this.setState({ loading: false })
         data.grams.tele.forEach(t => {
-          var item = {}
-          item["sender"] = t.ship
-          item["ts"] = t.thought.statement.date
-          item["key"] = t.thought.serial
-          item["style"] = styles.message
           var speech = t.thought.statement.speech
-          var type = Object.keys(speech)[0]
-          if (type == 'lin' || type == 'url' || type == 'exp') {
-            item["message"] = speech[type].txt
-
-            if (type == 'exp') {
-              item["style"] = styles.messageCode
-            }
-
-          } else {
-            console.log("Unhandled speech: " + type)
-            item["message"] = 'Unhandled speech: %' + type
-          }
-          newMessages.push(item)
+          this.processSpeech(newMessages, t.thought.serial, t.ship, speech)
         })
 
         this.setState({
@@ -132,6 +115,45 @@ export default class App extends React.Component {
       this.saveState('stationShip', this.state.stationShip)
       this.saveState('stationChannel', this.state.stationChannel)
     }
+  }
+
+  processSpeech(messages, serial, sender, speech) {
+    var item = {
+      key: serial,
+      sender: sender,
+      style: styles.message
+    }
+    var type = Object.keys(speech)[0]
+    if (type == 'lin' || type == 'url' || type == 'exp') {
+      item["message"] = speech[type].txt
+      if (!item["message"]) {
+        item["message"] = ' '
+      }
+
+      if (type == 'exp') {
+        item["style"] = styles.messageCode
+      }
+
+    } else if (type == 'app') {
+      item["message"] = speech[type].src + ": " + speech[type].txt
+
+    } else if (type == 'mor') {
+      var subItems = speech.mor
+      var i
+      for (i = 0; i < subItems.length; ++i) {
+        this.processSpeech(messages, serial + i, sender, subItems[i])
+      }
+
+    } else {
+      console.log("Unhandled speech: %" + type)
+      item["message"] = 'Unhandled speech: %' + type
+    }
+
+    if (!item["message"]) {
+      item["message"] = ' '
+    }
+
+    messages.push(item)
   }
 
   async doLeave() {
