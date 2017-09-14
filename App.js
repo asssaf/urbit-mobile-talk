@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
 import Autolink from 'react-native-autolink';
 import Header from './Header';
 import Login from './Login';
+import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
 export default class App extends React.Component {
@@ -12,8 +13,6 @@ export default class App extends React.Component {
     loggedOut: false,
     inChannel: false,
     loading: true,
-    formError: "",
-    formStatusStyle: styles.formLabel,
     typing: "",
     user: "",
     stationShip: "",
@@ -49,7 +48,7 @@ export default class App extends React.Component {
     this.setState({ user: user, loggedIn: true })
 
     // store the user for next time
-    this.saveState('user', this.state.user)
+    this.saveState('user', user)
   }
 
   async doLogout() {
@@ -61,40 +60,40 @@ export default class App extends React.Component {
     this.setState({ loggedIn: false, loggedOut: true })
   }
 
-  async doJoin() {
-    this.setState({ formError: "Joining...", formStatusStyle: styles.formLabel })
-    var server = 'https://' + this.state.stationShip + '.urbit.org'
-    this.urbitAnon = new Urbit(server, null)
-
-    // create a session
-    await this.urbitAnon.isAuthenticated()
-
-    res = await this.urbitAnon.subscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel, data => {
-      var newMessages = this.state.messages.slice()
-
-      if (data.grams) {
-        this.setState({ loading: false })
-        data.grams.tele.forEach(t => {
-          var speech = t.thought.statement.speech
-          this.processSpeech(newMessages, t.thought.serial, t.ship, speech)
-        })
-
-        this.setState({
-          messages: newMessages
-        })
-      }
+  handleJoin(urbit, stationShip, stationChannel) {
+    this.urbitAnon = urbit
+    this.setState({
+      stationShip: stationShip,
+      stationChannel: stationChannel,
+      inChannel: true
     })
 
+    this.saveState('stationShip', stationShip)
+    this.saveState('stationChannel', stationChannel)
+  }
+
+  async doLeave() {
+    res = await this.urbitAnon.unsubscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel)
     if (!res) {
-      this.setState({
-        formError: "Failed to join " + this.formatStation(),
-        formStatusStyle: styles.formError
+      console.log("Failed to unsubscribe")
+    }
+
+    this.setState({ inChannel: false, messages: [] })
+  }
+
+  handleMessages(data) {
+    var newMessages = this.state.messages.slice()
+
+    if (data.grams) {
+      this.setState({ loading: false })
+      data.grams.tele.forEach(t => {
+        var speech = t.thought.statement.speech
+        this.processSpeech(newMessages, t.thought.serial, t.ship, speech)
       })
 
-    } else {
-      this.setState({ inChannel: true, formError: "" })
-      this.saveState('stationShip', this.state.stationShip)
-      this.saveState('stationChannel', this.state.stationChannel)
+      this.setState({
+        messages: newMessages
+      })
     }
   }
 
@@ -153,15 +152,6 @@ export default class App extends React.Component {
     }
 
     messages.push(item)
-  }
-
-  async doLeave() {
-    res = await this.urbitAnon.unsubscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel)
-    if (!res) {
-      console.log("Failed to unsubscribe")
-    }
-
-    this.setState({ inChannel: false, messages: [] })
   }
 
   async sendMessage() {
@@ -243,42 +233,13 @@ export default class App extends React.Component {
 
     if (!this.state.inChannel) {
       return (
-        <View style={styles.container}>
-          <TouchableOpacity onPress={this.doLogout.bind(this)}>
-            <Header title="Join a Station" />
-          </TouchableOpacity>
-
-          <View style={styles.formRow}>
-            <Text style={styles.formLabel}>Ship</Text>
-            <TextInput
-              value={this.state.stationShip}
-              onChangeText={text => this.setState({stationShip: text.trim()})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="marzod"
-            />
-          </View>
-
-          <View style={styles.formRow}>
-            <Text style={styles.formLabel}>Channel</Text>
-            <TextInput
-              value={this.state.stationChannel}
-              onChangeText={text => this.setState({stationChannel: text.trim()})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="urbit-meta"
-            />
-          </View>
-
-          <View style={styles.formRow}>
-            <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
-          </View>
-
-          <TouchableOpacity onPress={this.doJoin.bind(this)}>
-            <Text style={styles.send}>Join</Text>
-          </TouchableOpacity>
-
-        </View>
+        <JoinStation
+          stationShip={this.state.stationShip}
+          stationChannel={this.state.stationChannel}
+          onJoin={this.handleJoin.bind(this)}
+          onMessages={this.handleMessages.bind(this)}
+          onHeaderClick={this.doLogout.bind(this)}
+        />
       )
     }
 
@@ -390,21 +351,5 @@ const styles = StyleSheet.create({
   },
   rowText: {
     flex: 1,
-  },
-  formRow: {
-    flexDirection: 'row',
-  },
-  formLabel: {
-    alignSelf: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-    padding: 20,
-  },
-  formError: {
-    alignSelf: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-    padding: 20,
-    color: 'red'
   },
 });
