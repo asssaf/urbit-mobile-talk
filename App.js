@@ -94,8 +94,16 @@ export default class App extends React.Component {
               message: speech.lin.txt
             }
             newMessages.push(item)
+
           } else {
-            console.log("Unhandled speech: " + speech)
+            var type = Object.keys(speech)[0]
+            console.log("Unhandled speech: " + type)
+            var item = {
+              key: t.thought.serial,
+              sender: ship,
+              message: 'Unhandled speech: %' + type
+            }
+            newMessages.push(item)
           }
         })
 
