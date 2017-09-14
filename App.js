@@ -88,7 +88,11 @@ export default class App extends React.Component {
       this.setState({ loading: false })
       data.grams.tele.forEach(t => {
         var speech = t.thought.statement.speech
-        this.processSpeech(newMessages, t.thought.serial, t.ship, speech)
+        this.processSpeech(newMessages,
+            t.thought.serial,
+            t.thought.statement.date,
+            t.ship,
+            speech)
       })
 
       this.setState({
@@ -97,10 +101,11 @@ export default class App extends React.Component {
     }
   }
 
-  processSpeech(messages, serial, sender, speech) {
+  processSpeech(messages, serial, date, sender, speech) {
     var item = {
       key: serial,
       sender: sender,
+      ts: date,
       style: styles.message
     }
     var type = Object.keys(speech)[0]
@@ -124,12 +129,12 @@ export default class App extends React.Component {
       var subItems = speech.mor
       var i
       for (i = 0; i < subItems.length; ++i) {
-        this.processSpeech(messages, serial + i, sender, subItems[i])
+        this.processSpeech(messages, serial + i, date, sender, subItems[i])
       }
 
     } else if (type == 'fat') {
       var subMessages = []
-      this.processSpeech(subMessages, serial, sender, speech.fat.taf)
+      this.processSpeech(subMessages, serial, date, sender, speech.fat.taf)
       item = subMessages[0]
       if (speech.fat.tor.text) {
         item.attachment = speech.fat.tor.text
@@ -278,11 +283,14 @@ export default class App extends React.Component {
       sender = sender.substring(0, 6) + "_" + sender.substring(50)
     }
 
+    var time = new Date(item.ts).toLocaleString();
+
     return (
       <View style={styles.row}>
         <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
           <Text style={styles.sender}>~{sender}</Text>
+          <Text style={styles.timestamp}>{time}</Text>
           <Autolink style={item.style} text={item.message} />
           {item.attachment &&
             <View style={styles.attachment}>
@@ -304,6 +312,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    flexDirection: 'row'
   },
   message: {
     fontSize: 18,
@@ -324,6 +333,9 @@ const styles = StyleSheet.create({
   },
   sender: {
     fontWeight: 'bold',
+    paddingRight: 10,
+  },
+  timestamp: {
     paddingRight: 10,
   },
   footer: {
