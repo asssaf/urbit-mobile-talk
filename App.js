@@ -71,6 +71,15 @@ export default class App extends React.Component {
     }
   }
 
+  async doLogout() {
+    var res = await this.urbit.deleteSession()
+    if (!res) {
+      console.log("Failed to logout")
+    }
+
+    this.setState({ loggedIn: false })
+  }
+
   async doJoin() {
     this.setState({ formError: "Joining...", formStatusStyle: styles.formLabel })
     var server = 'https://' + this.state.stationShip + '.urbit.org'
@@ -121,10 +130,19 @@ export default class App extends React.Component {
       })
 
     } else {
-      this.setState({ inChannel: true })
+      this.setState({ inChannel: true, formError: "" })
       this.saveState('stationShip', this.state.stationShip)
       this.saveState('stationChannel', this.state.stationChannel)
     }
+  }
+
+  async doLeave() {
+    res = await this.urbitAnon.unsubscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel)
+    if (!res) {
+      console.log("Failed to unsubscribe")
+    }
+
+    this.setState({ inChannel: false })
   }
 
   async sendMessage() {
@@ -225,7 +243,9 @@ export default class App extends React.Component {
     if (!this.state.inChannel) {
       return (
         <View style={styles.container}>
-          <Header title="Join a Station" />
+          <TouchableOpacity onPress={this.doLogout.bind(this)}>
+            <Header title="Join a Station" />
+          </TouchableOpacity>
 
           <View style={styles.formRow}>
             <Text style={styles.formLabel}>Ship</Text>
@@ -263,7 +283,9 @@ export default class App extends React.Component {
 
     return (
       <View style={styles.container}>
-        <Header title={this.formatStation()} />
+        <TouchableOpacity onPress={this.doLeave.bind(this)}>
+          <Header title={this.formatStation()} />
+        </TouchableOpacity>
 
         <FlatList inverted data={this.state.messages} renderItem={this.renderItem} />
 

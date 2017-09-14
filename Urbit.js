@@ -167,7 +167,7 @@ export default class Urbit {
 
   async unsubscribe(ship, app, path) {
     try {
-      var url = this.server + "/~/is/~" + this.user + "/" + app + path + "/.json?DELETE"
+      var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
       let response = await fetch(url, {
         credentials: "same-origin",
         headers: {
