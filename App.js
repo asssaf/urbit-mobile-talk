@@ -46,9 +46,11 @@ export default class App extends React.Component {
 
   async checkLogin() {
     if (!this.urbit) {
+      this.setState({ formError: "Reestablishing session...", formStatusStyle: styles.formLabel })
       var server = 'https://' + this.state.user + '.urbit.org'
       this.urbit = new Urbit(server, this.state.user)
       var result = await this.urbit.isAuthenticated()
+      this.setState({ formError: "" })
       if (result) {
         this.setState({ loggedIn: true })
       }
@@ -67,7 +69,7 @@ export default class App extends React.Component {
       this.setState({ loggedIn: true, formError: "" })
 
     } else {
-      this.setState({ formError: "Failed to login", formStatusStyle: styles.formLabel })
+      this.setState({ formError: "Failed to login", formStatusStyle: styles.formError })
     }
   }
 
