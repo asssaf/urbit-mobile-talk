@@ -245,4 +245,9 @@ export default class Urbit {
     }
     return str.slice(0, -1);
   }
+
+  formatStation(stationShip, stationChannel) {
+    return "~" + stationShip + "/" + stationChannel
+  }
+
 }

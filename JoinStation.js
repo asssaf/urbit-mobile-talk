@@ -9,12 +9,21 @@ export default class JoinStation extends React.Component {
     formStatusStyle: styles.formLabel,
     stationShip: this.props.stationShip,
     stationChannel: this.props.stationChannel,
+    submitted: false,
   }
 
   urbitAnon = null
 
+  componentDidMount() {
+    this.setState({ submitted: false })
+  }
+
   async doJoin() {
-    this.setState({ formError: "Joining...", formStatusStyle: styles.formLabel })
+    this.setState({
+      submitted: true,
+      formError: "Joining...",
+      formStatusStyle: styles.formLabel
+    })
     var server = 'https://' + this.state.stationShip + '.urbit.org'
     this.urbitAnon = new Urbit(server, null)
 
@@ -28,13 +37,30 @@ export default class JoinStation extends React.Component {
 
     if (!res) {
       this.setState({
-        formError: "Failed to join " + this.formatStation(),
+        submitted: false,
+        formError: "Failed to join " + this.urbitAnon.formatStation(this.state.stationShip, this.state.stationChannel),
         formStatusStyle: styles.formError
       })
 
     } else {
       this.props.onJoin(this.urbitAnon, this.state.stationShip, this.state.stationChannel)
     }
+  }
+
+  isDisabled() {
+    if (this.state.submitted) {
+      return true
+    }
+
+    if (this.state.stationShip.trim().length == 0) {
+      return true
+    }
+
+    if (this.state.stationChannel.trim().length == 0) {
+      return true
+    }
+
+    return false
   }
 
   render() {
@@ -47,6 +73,7 @@ export default class JoinStation extends React.Component {
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Ship</Text>
           <TextInput
+            editable={!this.state.submitted}
             value={this.state.stationShip}
             onChangeText={text => this.setState({stationShip: text.trim()})}
             style={styles.input}
@@ -58,6 +85,7 @@ export default class JoinStation extends React.Component {
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Channel</Text>
           <TextInput
+            editable={!this.state.submitted}
             value={this.state.stationChannel}
             onChangeText={text => this.setState({stationChannel: text.trim()})}
             style={styles.input}
@@ -70,8 +98,8 @@ export default class JoinStation extends React.Component {
           <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
         </View>
 
-        <TouchableOpacity onPress={this.doJoin.bind(this)}>
-          <Text style={styles.send}>Join</Text>
+        <TouchableOpacity disabled={this.isDisabled()} onPress={this.doJoin.bind(this)}>
+          <Text style={this.isDisabled() ? styles.sendDisabled : styles.send }>Join</Text>
         </TouchableOpacity>
 
       </View>
@@ -94,6 +122,13 @@ const styles = StyleSheet.create({
   send: {
     alignSelf: 'center',
     color: 'lightseagreen',
+    fontSize: 16,
+    fontWeight: 'bold',
+    padding: 20,
+  },
+  sendDisabled: {
+    alignSelf: 'center',
+    color: 'grey',
     fontSize: 16,
     fontWeight: 'bold',
     padding: 20,

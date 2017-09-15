@@ -9,40 +9,69 @@ export default class Login extends React.Component {
     formStatusStyle: styles.formLabel,
     user: this.props.user,
     code: "",
+    submitted: false,
   }
 
   urbit = null
 
   componentDidMount() {
-    this.setState({ formError: "" })
+    this.setState({ formError: "", submitted: false })
     if (this.state.user != "" && !this.props.loggedOut) {
       this.checkLogin()
     }
   }
 
   async checkLogin() {
-    this.setState({ formError: "Reestablishing session...", formStatusStyle: styles.formLabel })
+    this.setState({
+      submitted: true,
+      formError: "Reestablishing session...",
+      formStatusStyle: styles.formLabel
+    })
     var server = 'https://' + this.state.user + '.urbit.org'
     this.urbit = new Urbit(server, this.state.user)
     var result = await this.urbit.isAuthenticated()
-    this.setState({ formError: "" })
+    this.setState({ formError: "", submitted: false })
     if (result) {
       this.props.onLogin(this.urbit, this.state.user)
     }
   }
 
   async doLogin() {
-    this.setState({ formError: "Connecting...", formStatusStyle: styles.formLabel })
+    this.setState({
+      submitted: true,
+      formError: "Connecting...",
+      formStatusStyle: styles.formLabel
+    })
     var server = 'https://' + this.state.user + '.urbit.org'
     this.urbit = new Urbit(server, this.state.user)
     var result = await this.urbit.authenticate(this.state.code)
     if (result) {
-      this.setState({ formError: "" })
+      this.setState({ formError: "", submitted: false })
       this.props.onLogin(this.urbit, this.state.user)
 
     } else {
-      this.setState({ formError: "Failed to login", formStatusStyle: styles.formError })
+      this.setState({
+        formError: "Failed to login",
+        formStatusStyle: styles.formError,
+        submitted: false
+      })
     }
+  }
+
+  isDisabled() {
+    if (this.state.submitted) {
+      return true
+    }
+
+    if (this.state.user.trim().length == 0) {
+      return true
+    }
+
+    if (this.state.code.trim().length == 0) {
+      return true
+    }
+
+    return false
   }
 
   render() {
@@ -53,6 +82,7 @@ export default class Login extends React.Component {
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>User</Text>
           <TextInput
+            editable={!this.state.submitted}
             value={this.state.user}
             onChangeText={text => this.setState({user: text.trim()})}
             style={styles.input}
@@ -64,6 +94,7 @@ export default class Login extends React.Component {
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Code</Text>
           <TextInput
+            editable={!this.state.submitted}
             secureTextEntry={true}
             value={this.state.code}
             onChangeText={text => this.setState({code: text.trim()})}
@@ -77,8 +108,8 @@ export default class Login extends React.Component {
           <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
         </View>
 
-        <TouchableOpacity onPress={this.doLogin.bind(this)}>
-          <Text style={styles.send}>Login</Text>
+        <TouchableOpacity disabled={this.isDisabled()} onPress={this.doLogin.bind(this)}>
+          <Text style={this.isDisabled() ? styles.sendDisabled : styles.send}>Login</Text>
         </TouchableOpacity>
       </View>
     );
@@ -99,6 +130,13 @@ const styles = StyleSheet.create({
   send: {
     alignSelf: 'center',
     color: 'lightseagreen',
+    fontSize: 16,
+    fontWeight: 'bold',
+    padding: 20,
+  },
+  sendDisabled: {
+    alignSelf: 'center',
+    color: 'grey',
     fontSize: 16,
     fontWeight: 'bold',
     padding: 20,

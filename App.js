@@ -245,7 +245,7 @@ export default class App extends React.Component {
   }
 
   formatStation() {
-    return "~" + this.state.stationShip + "/" + this.state.stationChannel
+    return this.urbit.formatStation(this.state.stationShip, this.state.stationChannel)
   }
 
   render() {
