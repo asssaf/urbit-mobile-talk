@@ -25,15 +25,20 @@ export default class App extends React.Component {
   listRef = null
 
   componentDidMount() {
-    this.loadState('user').then(v => {
-      this.setState({ user: v, loading: false })
-    })
-    this.loadState('stationShip').then(v => this.setState({ stationShip: v }))
-    this.loadState('stationChannel').then(v => this.setState({ stationChannel: v }))
+
+    this.loadState([ 'user', 'stationShip', 'stationChannel' ])
+      .then(v => this.setState({ loading: false }))
+      .catch(e => this.setState({ loading: false }))
+
   }
 
-  loadState(key) {
-    return AsyncStorage.getItem('@urbit-mobile-talk:' + key)
+  loadState(keys) {
+    promises = []
+    keys.forEach(key => {
+      promises.push(AsyncStorage.getItem('@urbit-mobile-talk:' + key)
+        .then(v => this.setState({ [key]: v || '' })))
+    })
+    return Promise.all(promises)
   }
 
   async saveState(key, value) {

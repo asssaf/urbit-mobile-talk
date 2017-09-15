@@ -1,5 +1,15 @@
 {
   "expo": {
-    "sdkVersion": "20.0.0"
+    "name": "Urbit Mobile Talk",
+    "icon": "./icon.png",
+    "version": "0.2.0",
+    "slug": "urbit-mobile-talk",
+    "sdkVersion": "20.0.0",
+    "ios": {
+      "bundleIdentifier": "com.replaythat.urbitmobiletalk"
+    },
+    "android": {
+      "package": "com.replaythat.com.urbitmobiletalk"
+    }
   }
 }
