@@ -108,7 +108,6 @@ export default class App extends React.Component {
       this.setState({
         messages: newMessages
       })
-      setTimeout(() => { this.listRef.scrollToEnd() }, 100)
     }
   }
 
