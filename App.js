@@ -313,11 +313,7 @@ export default class App extends React.Component {
   renderItem({item}) {
     var avatarUrl = 'https://robohash.org/~.~'+item.sender
 
-    var sender = item.sender
-    if (sender.length == 56) {
-      sender = sender.substring(0, 6) + "_" + sender.substring(50)
-    }
-
+    var sender = this.urbit.formatShip(item.sender)
     var time = new Date(item.ts).toLocaleString();
 
     var messages = []
