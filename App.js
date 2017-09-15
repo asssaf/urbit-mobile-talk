@@ -22,6 +22,7 @@ export default class App extends React.Component {
 
   urbit = null
   urbitAnon = null
+  listRef = null
 
   componentDidMount() {
     this.loadState('user').then(v => {
@@ -102,6 +103,7 @@ export default class App extends React.Component {
       this.setState({
         messages: newMessages
       })
+      setTimeout(() => { this.listRef.scrollToEnd() }, 100)
     }
   }
 
@@ -196,6 +198,7 @@ export default class App extends React.Component {
     }
 
     await this.sendMessageText(text)
+    this.listRef.scrollToEnd()
   }
 
   async sendMessageText(text) {
@@ -282,7 +285,11 @@ export default class App extends React.Component {
           <Header title={this.formatStation()} />
         </TouchableOpacity>
 
-        <FlatList data={this.state.messages} renderItem={this.renderItem.bind(this)} />
+        <FlatList
+          ref={(list) => this.listRef = list}
+          data={this.state.messages}
+          renderItem={this.renderItem.bind(this)}
+        />
 
         <KeyboardAvoidingView behavior="padding">
           <View style={styles.footer}>
