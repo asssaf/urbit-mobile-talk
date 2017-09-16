@@ -194,10 +194,17 @@ export default class App extends React.Component {
   }
 
   async sendMessage() {
+    var max = 64
     var text = this.state.typing
-    while (text.length > 64) {
-      var first = text.substring(0, 64)
-      text = text.substring(64)
+    while (text.length > max) {
+      var lastBreak = text.lastIndexOf(' ')
+      var next = lastBreak + 1
+      if (lastBreak < 0) {
+        lastBreak = max
+        next = max
+      }
+      first = text.substring(0, lastBreak)
+      text = text.substring(next)
       await this.sendMessageText(first)
     }
 
