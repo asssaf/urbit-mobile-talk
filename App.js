@@ -372,14 +372,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   message: {
-    fontSize: 18,
+    fontSize: 16,
   },
   messageAct: {
-    fontSize: 18,
+    fontSize: 16,
     fontStyle: 'italic'
   },
   messageCode: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'monospace'
   },
   attachment: {
@@ -394,6 +394,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     paddingRight: 10,
+    color: 'gray'
   },
   footer: {
     flexDirection: 'row',
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
   input: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    fontSize: 18,
+    fontSize: 16,
     flex: 1,
   },
   send: {
