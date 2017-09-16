@@ -246,13 +246,15 @@ export default class Urbit {
     return str.slice(0, -1);
   }
 
-  formatStation(stationShip, stationChannel) {
-    return "~" + this.formatShip(stationShip) + "/" + stationChannel
+  formatStation(stationShip, stationChannel, short) {
+    return "~" + this.formatShip(stationShip, short) + "/" + stationChannel
   }
 
-  formatShip(ship) {
-    if (ship.length == 56) {
-      ship = ship.substring(0, 6) + "_" + ship.substring(50)
+  formatShip(ship, short) {
+    if (short) {
+      if (ship.length == 56) {
+        ship = ship.substring(0, 6) + "_" + ship.substring(50)
+      }
     }
     return ship
   }

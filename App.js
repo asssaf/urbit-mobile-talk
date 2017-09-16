@@ -248,8 +248,8 @@ export default class App extends React.Component {
     });
   }
 
-  formatStation() {
-    return this.urbit.formatStation(this.state.stationShip, this.state.stationChannel)
+  formatStation(short) {
+    return this.urbit.formatStation(this.state.stationShip, this.state.stationChannel, short)
   }
 
   render() {
@@ -286,7 +286,7 @@ export default class App extends React.Component {
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={this.doLeave.bind(this)}>
-          <Header title={this.formatStation()} />
+          <Header title={this.formatStation(true)} />
         </TouchableOpacity>
 
         <FlatList
@@ -317,7 +317,7 @@ export default class App extends React.Component {
   renderItem({item}) {
     var avatarUrl = 'https://robohash.org/~.~'+item.sender
 
-    var sender = this.urbit.formatShip(item.sender)
+    var sender = this.urbit.formatShip(item.sender, true)
     var time = new Date(item.ts).toLocaleString();
 
     var messages = []

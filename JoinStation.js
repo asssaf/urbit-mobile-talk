@@ -38,7 +38,7 @@ export default class JoinStation extends React.Component {
     if (!res) {
       this.setState({
         submitted: false,
-        formError: "Failed to join " + this.urbitAnon.formatStation(this.state.stationShip, this.state.stationChannel),
+        formError: "Failed to join " + this.urbitAnon.formatStation(this.state.stationShip, this.state.stationChannel, true),
         formStatusStyle: styles.formError
       })
 
