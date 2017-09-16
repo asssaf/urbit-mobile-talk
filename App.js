@@ -325,7 +325,13 @@ export default class App extends React.Component {
     var avatarUrl = 'https://robohash.org/~.~'+item.sender
 
     var sender = this.urbit.formatShip(item.sender, true)
-    var time = new Date(item.ts).toLocaleString();
+    var time
+    if (new Date().toLocaleDateString() == new Date(item.ts).toLocaleDateString()) {
+      time = new Date(item.ts).toLocaleTimeString()
+
+    } else {
+      time = new Date(item.ts).toLocaleString();
+    }
 
     var messages = []
     for (var i = 0; i < item.messages.length; ++i) {
@@ -336,8 +342,10 @@ export default class App extends React.Component {
       <View style={styles.row}>
         <Image style={styles.avatar} source={{uri: avatarUrl}} />
         <View style={styles.rowText}>
-          <Text style={styles.sender}>~{sender}</Text>
-          <Text style={styles.timestamp}>{time}</Text>
+          <View style={styles.itemHeader}>
+            <Text style={styles.sender}>~{sender}</Text>
+            <Text style={styles.timestamp}>{time}</Text>
+          </View>
           <View>
             {messages}
           </View>
@@ -369,6 +377,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    flexDirection: 'row'
+  },
+  itemHeader: {
     flexDirection: 'row'
   },
   message: {
