@@ -7,6 +7,12 @@ import Login from './Login';
 import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
+function _isUrl(s) {
+  var pattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
+  var re = new RegExp(pattern)
+  return s.match(re)
+}
+
 export default class App extends React.Component {
   state = {
     loggedIn: false,
@@ -194,8 +200,13 @@ export default class App extends React.Component {
   }
 
   async sendMessage() {
-    var max = 64
     var text = this.state.typing
+    if (_isUrl(text)) {
+      await this.sendMessageText("url", text)
+      return
+    }
+
+    var max = 64
     while (text.length > max) {
       var lastBreak = text.lastIndexOf(' ', max - 1)
       var next = lastBreak + 1
@@ -205,24 +216,32 @@ export default class App extends React.Component {
       }
       first = text.substring(0, lastBreak)
       text = text.substring(next)
-      await this.sendMessageText(first)
+      await this.sendMessageText("lin", first)
     }
 
-    await this.sendMessageText(text)
+    await this.sendMessageText("lin", text)
     this.listRef.scrollToEnd()
   }
 
-  async sendMessageText(text) {
+  async sendMessageText(type, text) {
     if (text.trim().length == 0) {
       return
     }
-    var speech = {
-      lin: {
-        txt: text,
-        say: true
-      }
-    };
 
+    var speech
+    if (type == 'url') {
+      speech = {
+        url: text
+      };
+
+    } else {
+      speech = {
+        lin: {
+          txt: text,
+          say: true
+        }
+      };
+    }
     var aud = this.formatStation()
     var audi = {}
     audi[aud] = {
