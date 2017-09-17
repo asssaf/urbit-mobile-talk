@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
 import Autolink from 'react-native-autolink';
 import Header from './Header';
 import Login from './Login';
+import Loading from './Loading';
 import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
@@ -19,6 +20,7 @@ export default class App extends React.Component {
     loggedOut: false,
     inChannel: false,
     loading: true,
+    loadingStatus: "Loading...",
     typing: "",
     user: "",
     stationShip: "",
@@ -31,11 +33,26 @@ export default class App extends React.Component {
   listRef = null
 
   componentDidMount() {
-
     this.loadState([ 'user', 'stationShip', 'stationChannel' ])
-      .then(v => this.setState({ loading: false }))
-      .catch(e => this.setState({ loading: false }))
+      .then(v => this.checkLogin())
+      .catch(e => this.checkLogin())
+  }
 
+  async checkLogin() {
+    if (this.state.user == "") {
+      this.setState({ loading: false })
+      return
+    }
+
+    this.setState({ loadingStatus: "Logging in..." })
+
+    var server = 'https://' + this.state.user + '.urbit.org'
+    this.urbit = new Urbit(server, this.state.user)
+    var result = await this.urbit.isAuthenticated()
+    this.setState({ loading: false })
+    if (result) {
+      this.handleLogin(this.urbit, this.state.user)
+    }
   }
 
   loadState(keys) {
@@ -61,6 +78,11 @@ export default class App extends React.Component {
 
     // store the user for next time
     this.saveState('user', user)
+  }
+
+  handleLoadingCancel() {
+    //TODO cancel request in progress
+    this.setState({ loading: false })
   }
 
   async doLogout() {
@@ -281,9 +303,10 @@ export default class App extends React.Component {
   render() {
     if (this.state.loading) {
       return (
-        <View style={styles.container}>
-          <Text>Loading...</Text>
-        </View>
+        <Loading
+          statusMessage={this.state.loadingStatus}
+          onCancel={this.handleLoadingCancel.bind(this)}
+        />
       );
     }
 

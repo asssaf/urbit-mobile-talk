@@ -16,24 +16,6 @@ export default class Login extends React.Component {
 
   componentDidMount() {
     this.setState({ formError: "", submitted: false })
-    if (this.state.user != "" && !this.props.loggedOut) {
-      this.checkLogin()
-    }
-  }
-
-  async checkLogin() {
-    this.setState({
-      submitted: true,
-      formError: "Reestablishing session...",
-      formStatusStyle: styles.formLabel
-    })
-    var server = 'https://' + this.state.user + '.urbit.org'
-    this.urbit = new Urbit(server, this.state.user)
-    var result = await this.urbit.isAuthenticated()
-    this.setState({ formError: "", submitted: false })
-    if (result) {
-      this.props.onLogin(this.urbit, this.state.user)
-    }
   }
 
   async doLogin() {
