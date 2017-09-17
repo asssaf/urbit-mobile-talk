@@ -197,7 +197,7 @@ export default class App extends React.Component {
     var max = 64
     var text = this.state.typing
     while (text.length > max) {
-      var lastBreak = text.lastIndexOf(' ')
+      var lastBreak = text.lastIndexOf(' ', max - 1)
       var next = lastBreak + 1
       if (lastBreak < 0) {
         lastBreak = max
