@@ -26,7 +26,7 @@ export default class Urbit {
       return authenticated;
 
     } catch(error) {
-      console.error(error);
+      console.error("isAuthenticated: " + error)
       return false
     }
   }
@@ -60,7 +60,7 @@ export default class Urbit {
       return true
 
     } catch(error) {
-      console.error(error);
+      console.error("deleteSession: " + error);
       return false
     }
   }
@@ -98,7 +98,7 @@ export default class Urbit {
       return true
 
     } catch (error) {
-      console.error(error)
+      console.error("authenticate: " + error)
     }
   }
 
@@ -123,7 +123,7 @@ export default class Urbit {
       return true
 
     } catch (error) {
-      console.error(error)
+      console.error("poke: " + error)
       return false
     }
   }
@@ -160,7 +160,7 @@ export default class Urbit {
       return true
 
     } catch (error) {
-      console.error(error)
+      console.error("subscribe: " + error)
       return false
     }
   }
@@ -196,7 +196,7 @@ export default class Urbit {
       return true
 
     } catch (error) {
-      console.log(error)
+      console.log("unsubscribe: " + error)
       return false
     }
   }
@@ -228,7 +228,7 @@ export default class Urbit {
         }
 
       } catch (error) {
-        console.log(error)
+        console.log("poll: " + error)
         continue
       }
     }
