@@ -223,56 +223,34 @@ export default class App extends React.Component {
 
   async sendMessage() {
     var text = this.state.typing
+    var speeches = []
     if (_isUrl(text)) {
-      await this.sendMessageText("url", text)
-      return
+      speeches.push(this.buildSpeech("url", text))
 
-    } else if (text.indexOf('#') == 0) {
-      await this.sendMessageText("eval", text.substring(1))
-      return
-    }
-
-    var max = 64
-    while (text.length > max) {
-      var lastBreak = text.lastIndexOf(' ', max - 1)
-      var next = lastBreak + 1
-      if (lastBreak < 0) {
-        lastBreak = max
-        next = max
-      }
-      first = text.substring(0, lastBreak)
-      text = text.substring(next)
-      await this.sendMessageText("lin", first)
-    }
-
-    await this.sendMessageText("lin", text)
-    this.listRef.scrollToEnd()
-  }
-
-  async sendMessageText(type, text) {
-    if (text.trim().length == 0) {
-      return
-    }
-
-    var speech
-    if (type == 'url') {
-      speech = {
-        url: text
-      };
-
-    } else if (type == 'eval') {
-      speech = {
-        eval: text
-      };
+    } else if (text.charAt(0) == '#') {
+      speeches.push(this.buildSpeech("eval", text.substring(1)))
 
     } else {
-      speech = {
-        lin: {
-          txt: text,
-          say: true
+      var say = true
+      if (text.charAt(0) == '@') {
+        text = text.substring(1)
+        say = false
+      }
+
+      this.breakTextToLines(text).forEach(line => {
+        if (line.trim().length > 0) {
+          speeches.push(this.buildSpeech('lin', line, say))
         }
-      };
+      })
     }
+
+    this.listRef.scrollToEnd()
+    for (var i = 0; i < speeches.length; ++ i) {
+      await this.sendMessageSpeech(speeches[i])
+    }
+  }
+
+  async sendMessageSpeech(speech) {
     var aud = this.formatStation()
     var audi = {}
     audi[aud] = {
@@ -303,6 +281,46 @@ export default class App extends React.Component {
     this.setState({
       typing: '',
     });
+  }
+
+  buildSpeech(type, text, arg) {
+    var speech
+    if (type == "lin") {
+      speech = {
+        txt: text,
+        say: arg
+      }
+
+    } else {
+      speech = text
+    }
+
+    return {
+      [type]: speech
+    }
+  }
+
+  breakTextToLines(text) {
+    var lines = []
+    var max = 64
+
+    while (text.length > max) {
+      var lastBreak = text.lastIndexOf(' ', max - 1)
+      var next = lastBreak + 1
+      if (lastBreak < 0) {
+        lastBreak = max
+        next = max
+      }
+      first = text.substring(0, lastBreak)
+      text = text.substring(next)
+      if (first.trim().length > 0) {
+        lines.push(first)
+      }
+    }
+
+    lines.push(text)
+
+    return lines
   }
 
   formatStation(short) {
