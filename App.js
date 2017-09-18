@@ -466,7 +466,9 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     borderWidth: 1,
     borderRadius: 5,
-    padding: 10
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 10,
   },
   sender: {
     fontWeight: 'bold',
