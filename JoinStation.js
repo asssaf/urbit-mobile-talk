@@ -33,7 +33,7 @@ export default class JoinStation extends React.Component {
     res = await this.urbitAnon.subscribe(
         this.state.stationShip,
         'talk', '/afx/' + this.state.stationChannel,
-        this.props.onMessages)
+        this.props.onMessages, this.props.onPoll)
 
     if (!res) {
       this.setState({

@@ -128,7 +128,7 @@ export default class Urbit {
     }
   }
 
-  async subscribe(ship, app, path, callback) {
+  async subscribe(ship, app, path, callback, pollback) {
     try {
       var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?PUT"
       let response = await fetch(url, {
@@ -156,7 +156,7 @@ export default class Urbit {
       this.event = 1;
 
       console.log("Subscribed successfully")
-      this.poll(callback);
+      this.poll(callback, pollback);
       return true
 
     } catch (error) {
@@ -201,7 +201,7 @@ export default class Urbit {
     }
   }
 
-  async poll(callback) {
+  async poll(callback, pollback) {
     while (true) {
       try {
         var url = this.server + "/~/of/" + this.ixor + "?poll=" + this.event
@@ -216,6 +216,10 @@ export default class Urbit {
           console.log("poll: Request failed: " + response.status)
           console.log(await response.text())
           continue
+        }
+
+        if (pollback) {
+          pollback()
         }
 
         var responseJson = await response.json()

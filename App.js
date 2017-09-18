@@ -26,6 +26,7 @@ export default class App extends React.Component {
     stationShip: "",
     stationChannel: "",
     messages: [],
+    lastUpdate: null,
   };
 
   urbit = null
@@ -137,6 +138,10 @@ export default class App extends React.Component {
         messages: newMessages
       })
     }
+  }
+
+  handlePoll() {
+    this.setState({ lastUpdate: new Date() })
   }
 
   addMessage(messages, newMessage) {
@@ -327,6 +332,22 @@ export default class App extends React.Component {
     return this.urbit.formatStation(this.state.stationShip, this.state.stationChannel, short)
   }
 
+
+  listFooter() {
+    if (this.state.lastUpdate == null) {
+      return null
+    }
+
+    var lastUpdatedAt = this.state.lastUpdate.toLocaleTimeString()
+
+    return (
+      <View style={styles.listFooter}>
+        <Text style={styles.lastUpdated}>Last updated at {lastUpdatedAt}</Text>
+      </View>
+    );
+  }
+
+
   render() {
     if (this.state.loading) {
       return (
@@ -354,6 +375,7 @@ export default class App extends React.Component {
           stationChannel={this.state.stationChannel}
           onJoin={this.handleJoin.bind(this)}
           onMessages={this.handleMessages.bind(this)}
+          onPoll={this.handlePoll.bind(this)}
           onHeaderClick={this.doLogout.bind(this)}
         />
       )
@@ -369,6 +391,7 @@ export default class App extends React.Component {
           ref={(list) => this.listRef = list}
           data={this.state.messages}
           renderItem={this.renderItem.bind(this)}
+          ListFooterComponent={this.listFooter.bind(this)}
         />
 
         <KeyboardAvoidingView behavior="padding">
@@ -447,6 +470,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     flexDirection: 'row'
+  },
+  listFooter: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lastUpdated: {
+    fontSize: 14,
+    color: 'lightgray',
   },
   itemHeader: {
     flexDirection: 'row'
