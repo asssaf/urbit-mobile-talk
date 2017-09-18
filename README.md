@@ -1,3 +1,26 @@
+# urbit-mobile-talk
+Urbit talk client written in react native
+
+Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native-chat-tutorial).
+
+## Running the published app
+### Using the Expo app
+Download and install the Expo app for iOS/android.
+
+Go the app URL for a QR code: https://expo.io/@asssaf/urbit-mobile-talk
+
+### Standalone app
+Standalone apks for android are published in [releases](releases).
+
+## Running from source code
+```
+$ npm start
+```
+
+---
+below here are the original instructions for create-react-native-app
+
+# create-react-native-app
 This project was bootstrapped with [Create React Native App](https://github.com/react-community/create-react-native-app).
 
 Below you'll find information about performing common tasks. The most recent version of this guide is available [here](https://github.com/react-community/create-react-native-app/blob/master/react-native-scripts/template/README.md).
