@@ -226,6 +226,10 @@ export default class App extends React.Component {
     if (_isUrl(text)) {
       await this.sendMessageText("url", text)
       return
+
+    } else if (text.indexOf('#') == 0) {
+      await this.sendMessageText("eval", text.substring(1))
+      return
     }
 
     var max = 64
@@ -254,6 +258,11 @@ export default class App extends React.Component {
     if (type == 'url') {
       speech = {
         url: text
+      };
+
+    } else if (type == 'eval') {
+      speech = {
+        eval: text
       };
 
     } else {
