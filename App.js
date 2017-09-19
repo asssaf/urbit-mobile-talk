@@ -180,7 +180,8 @@ export default class App extends React.Component {
   }
 
   addMessage(messages, newMessage) {
-    if (messages.length > 0 && messages[messages.length - 1].sender == newMessage.sender) {
+    if (messages.length > 0 && messages[messages.length - 1].sender == newMessage.sender
+        && ((newMessage.ts - messages[messages.length - 1].ts)) < 3600000) {
       item = messages[messages.length - 1]
       item.messages.push(newMessage.messages[0])
 
