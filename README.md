@@ -1,5 +1,5 @@
 # urbit-mobile-talk
-Urbit talk client written in react native
+React-native frontend for urbit talk
 
 Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native-chat-tutorial).
 
