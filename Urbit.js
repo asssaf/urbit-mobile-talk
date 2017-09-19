@@ -5,6 +5,7 @@ export default class Urbit {
     this.oryx = null;
     this.ixor = null;
     this.event = -1
+    this.subscriptions = 0
   }
 
   async isAuthenticated() {
@@ -128,7 +129,7 @@ export default class Urbit {
     }
   }
 
-  async subscribe(ship, app, path, callback, pollback) {
+  async subscribe(ship, wire, app, path, callback, pollback) {
     try {
       var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?PUT"
       let response = await fetch(url, {
@@ -139,7 +140,7 @@ export default class Urbit {
         method: 'POST',
         body: JSON.stringify({
           oryx: this.oryx,
-          wire: path,
+          wire: wire,
           appl: app,
           mark: 'json',
           ship: ship
@@ -153,10 +154,12 @@ export default class Urbit {
       }
 
       var responseJson = await response.json()
-      this.event = 1;
-
-      console.log("Subscribed successfully")
-      this.poll(callback, pollback);
+      console.log("Subscribed successfully: " + wire)
+      this.subscriptions++
+      if (this.event == -1) {
+        this.event = 1;
+        this.poll(callback, pollback);
+      }
       return true
 
     } catch (error) {
@@ -165,7 +168,7 @@ export default class Urbit {
     }
   }
 
-  async unsubscribe(ship, app, path) {
+  async unsubscribe(ship, wire, app, path) {
     try {
       var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
       let response = await fetch(url, {
@@ -176,7 +179,7 @@ export default class Urbit {
         method: 'POST',
         body: JSON.stringify({
           oryx: this.oryx,
-          wire: path,
+          wire: wire,
           appl: app,
           mark: 'json',
           ship: ship
@@ -189,9 +192,12 @@ export default class Urbit {
         return false
       }
 
-      // cancel polling
-      this.event = -1
-      console.log("Unsubscribed successfully")
+      this.subscriptions--
+      if (this.subscriptions == 0) {
+        // cancel polling
+        this.event = -1
+      }
+      console.log("Unsubscribed successfully: " + wire)
 
       return true
 
@@ -226,7 +232,10 @@ export default class Urbit {
         if (!responseJson.beat) {
           // got a change
           if (responseJson.type == 'rush') {
-            callback(responseJson.data.json)
+            callback(responseJson.from.path, responseJson.data.json)
+
+          } else if (responseJson.type == 'quit') {
+            callback(responseJson.from.path, null)
           }
           this.event++
         }
@@ -248,6 +257,13 @@ export default class Urbit {
       str += _str + ".";
     }
     return str.slice(0, -1);
+  }
+
+  /**
+   * format a number the urbit way (with dots)
+   */
+  formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
   formatStation(stationShip, stationChannel, short) {

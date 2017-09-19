@@ -27,6 +27,8 @@ export default class App extends React.Component {
     stationChannel: "",
     messages: [],
     lastUpdate: null,
+    firstItem: -1,
+    refreshing: false,
   };
 
   urbit = null
@@ -108,19 +110,41 @@ export default class App extends React.Component {
   }
 
   async doLeave() {
-    res = await this.urbitAnon.unsubscribe(this.state.stationShip, 'talk', '/afx/' + this.state.stationChannel)
+    res = await this.urbitAnon.unsubscribe(this.state.stationShip, '/', 'talk', '/afx/' + this.state.stationChannel)
     if (!res) {
       console.log("Failed to unsubscribe")
     }
 
-    this.setState({ inChannel: false, messages: [] })
+    this.setState({
+      inChannel: false,
+      messages: [],
+      refreshing: false,
+      firstItem: -1
+    })
   }
 
-  handleMessages(data) {
-    var newMessages = this.state.messages.slice()
+  handleMessages(wire, data) {
+    var isRefresh = wire.startsWith('/refresh')
 
-    if (data.grams) {
-      this.setState({ loading: false })
+    if (data == null) {
+      // got %quit
+      console.log("got %quit for: " + wire)
+      if (isRefresh) {
+        this.setState({ refreshing: false })
+
+      } else {
+        //TODO resubscribe
+      }
+
+    } else if (data.grams) {
+      var newMessages = []
+      if (!isRefresh) {
+        newMessages = this.state.messages.slice()
+      }
+
+      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
+        this.setState({ firstItem: data.grams.num })
+      }
       data.grams.tele.forEach(t => {
         var speech = t.thought.statement.speech
         var messages = this.processSpeech(
@@ -134,9 +158,20 @@ export default class App extends React.Component {
         }
       })
 
-      this.setState({
-        messages: newMessages
-      })
+      if (isRefresh) {
+        newMessages = newMessages.concat(this.state.messages.slice())
+
+        var path = wire.substring('/refresh'.length)
+        this.urbitAnon.unsubscribe(this.state.stationShip, wire, 'talk', path)
+      }
+
+      this.setState({ messages: newMessages })
+      if (isRefresh) {
+        this.setState({ refreshing: false })
+
+      } else {
+        this.setState({ loading: false })
+      }
     }
   }
 
@@ -347,6 +382,28 @@ export default class App extends React.Component {
     );
   }
 
+  async refresh() {
+    if (this.state.firstItem == 0 || this.state.refreshing) {
+      return
+    }
+
+    this.setState({ refreshing: true })
+
+    var maxFetchItems = 32
+    var end = this.state.firstItem + 1
+    var start = Math.max(0, end - maxFetchItems)
+    var path = '/afx/' + this.state.stationChannel
+        + '/' + this.urbit.formatNumber(start)
+        + '/' + this.urbit.formatNumber(end)
+
+    var res = await this.urbitAnon.subscribe(this.state.stationShip, '/refresh' + path,
+        'talk', path, this.handleMessages.bind(this))
+
+    if (!res) {
+      console.log("refresh failed")
+      this.setState({ refreshing: false })
+    }
+  }
 
   render() {
     if (this.state.loading) {
@@ -392,6 +449,8 @@ export default class App extends React.Component {
           data={this.state.messages}
           renderItem={this.renderItem.bind(this)}
           ListFooterComponent={this.listFooter.bind(this)}
+          refreshing={this.state.refreshing}
+          onRefresh={this.refresh.bind(this)}
         />
 
         <KeyboardAvoidingView behavior="padding">
