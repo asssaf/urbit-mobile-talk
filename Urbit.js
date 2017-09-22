@@ -1,49 +1,55 @@
 export default class Urbit {
-  constructor (server, user) {
-    this.server = server
-    this.user = user
-    this.oryx = null;
-    this.ixor = null;
-    this.event = -1
-    this.subscriptions = 0
-  }
-
-  async isAuthenticated() {
+  async getSession(server, user) {
     try {
-      let response = await fetch(this.server + "/~/auth.json", {
+      let response = await fetch(server + "/~/auth.json", {
         credentials: 'same-origin'
       })
       if (!response.ok) {
-        console.log("isAuthenticated: Request failed: " + response.status)
-        return false
+        console.log("getSession: Request failed: " + response.status)
+        return null
       }
 
       let responseJson = await response.json();
 
-      var authenticated = responseJson.auth.includes(this.user)
-      this.oryx = responseJson.oryx
-      this.ixor = responseJson.ixor
+      var session = {
+        server: server,
+        ship: responseJson.ship,
+        user: user,
+        authenticated: responseJson.auth.includes(user),
+        oryx: responseJson.oryx,
+        ixor: responseJson.ixor,
+        event: -1,
+        subscriptions: 0,
+      }
 
-      return authenticated;
+      return session;
 
     } catch(error) {
-      console.error("isAuthenticated: " + error)
-      return false
+      console.error("getSession: " + error)
+      return null
     }
   }
 
-  async deleteSession() {
-    var authenticated = await this.isAuthenticated()
-    if (!authenticated) {
+  async isAuthenticated(session) {
+    if (!session.authenticated) {
+      return false
+    }
+
+    var dummySession = await getSession(session.server, session.user)
+    return dummySession.authenticated
+  }
+
+  async deleteSession(session) {
+    if (!session.authenticated) {
       console.log("Not authenticated")
       return true
     }
 
     try {
-      let response = await fetch(this.server + "/~/auth.json?DELETE", {
+      let response = await fetch(session.server + "/~/auth.json?DELETE", {
           method: 'POST',
           body: JSON.stringify({
-            oryx: this.oryx,
+            oryx: session.oryx,
           })
       })
       if (!response.ok) {
@@ -66,19 +72,18 @@ export default class Urbit {
     }
   }
 
-  async authenticate(code) {
-    var authenticated = await this.isAuthenticated()
-    if (authenticated) {
+  async authenticate(session, code) {
+    if (session.authenticated) {
       console.log("Already authenticated")
       return true
     }
     try {
-      let response = await fetch(this.server + "/~/auth.json?PUT", {
+      let response = await fetch(session.server + "/~/auth.json?PUT", {
           method: 'POST',
           body: JSON.stringify({
-            ship: this.user,
+            ship: session.user,
             code: code,
-            oryx: this.oryx,
+            oryx: session.oryx,
           })
       })
       if (!response.ok) {
@@ -87,29 +92,29 @@ export default class Urbit {
       }
 
       let responseJson = await response.json();
-      var authenticated = responseJson.auth.includes(this.user)
+      var authenticated = responseJson.auth.includes(session.user)
       if (!authenticated) {
         console.log("Failed to authenticate")
         return false
       }
 
-      this.oryx = responseJson.oryx
-      this.ixor = responseJson.ixor
+      session.authenticated = true
       console.log("Authenticated successfully")
       return true
 
     } catch (error) {
       console.error("authenticate: " + error)
+      return false
     }
   }
 
-  async poke(app, mark, wire, data) {
+  async poke(session, app, mark, wire, data) {
     try {
-      var url = this.server + "/~~/~/to/" + app + "/" + mark
+      var url = session.server + "/~~/~/to/" + app + "/" + mark
       let response = await fetch(url, {
         method: 'POST',
         body: JSON.stringify({
-          oryx: this.oryx,
+          oryx: session.oryx,
           wire: wire,
           xyro: data
         })
@@ -129,9 +134,9 @@ export default class Urbit {
     }
   }
 
-  async subscribe(ship, wire, app, path, callback, pollback) {
+  async subscribe(session, ship, wire, app, path, callback, pollback) {
     try {
-      var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?PUT"
+      var url = session.server + "/~/is/~" + ship + "/" + app + path + "/.json?PUT"
       let response = await fetch(url, {
         credentials: "same-origin",
         headers: {
@@ -139,7 +144,7 @@ export default class Urbit {
         },
         method: 'POST',
         body: JSON.stringify({
-          oryx: this.oryx,
+          oryx: session.oryx,
           wire: wire,
           appl: app,
           mark: 'json',
@@ -155,10 +160,10 @@ export default class Urbit {
 
       var responseJson = await response.json()
       console.log("Subscribed successfully: " + wire)
-      this.subscriptions++
-      if (this.event == -1) {
-        this.event = 1;
-        this.poll(callback, pollback);
+      session.subscriptions++
+      if (session.event == -1) {
+        session.event = 1;
+        this.poll(session, callback, pollback);
       }
       return true
 
@@ -168,9 +173,9 @@ export default class Urbit {
     }
   }
 
-  async unsubscribe(ship, wire, app, path) {
+  async unsubscribe(session, ship, wire, app, path) {
     try {
-      var url = this.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
+      var url = session.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
       let response = await fetch(url, {
         credentials: "same-origin",
         headers: {
@@ -178,7 +183,7 @@ export default class Urbit {
         },
         method: 'POST',
         body: JSON.stringify({
-          oryx: this.oryx,
+          oryx: session.oryx,
           wire: wire,
           appl: app,
           mark: 'json',
@@ -192,10 +197,10 @@ export default class Urbit {
         return false
       }
 
-      this.subscriptions--
-      if (this.subscriptions == 0) {
+      session.subscriptions--
+      if (session.subscriptions == 0) {
         // cancel polling
-        this.event = -1
+        session.event = -1
       }
       console.log("Unsubscribed successfully: " + wire)
 
@@ -207,13 +212,13 @@ export default class Urbit {
     }
   }
 
-  async poll(callback, pollback) {
+  async poll(session, callback, pollback) {
     while (true) {
       try {
-        var url = this.server + "/~/of/" + this.ixor + "?poll=" + this.event
+        var url = session.server + "/~/of/" + session.ixor + "?poll=" + session.event
         var response = await fetch(url)
 
-        if (this.event == -1) {
+        if (session.event == -1) {
           // polling cancelled
           return true
         }
@@ -237,7 +242,7 @@ export default class Urbit {
           } else if (responseJson.type == 'quit') {
             callback(responseJson.from.path, null)
           }
-          this.event++
+          session.event++
         }
 
       } catch (error) {

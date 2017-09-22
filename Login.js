@@ -12,7 +12,7 @@ export default class Login extends React.Component {
     submitted: false,
   }
 
-  urbit = null
+  urbit = new Urbit()
 
   componentDidMount() {
     this.setState({ formError: "", submitted: false })
@@ -24,12 +24,22 @@ export default class Login extends React.Component {
       formError: "Connecting...",
       formStatusStyle: styles.formLabel
     })
+
     var server = 'https://' + this.state.user + '.urbit.org'
-    this.urbit = new Urbit(server, this.state.user)
-    var result = await this.urbit.authenticate(this.state.code)
+    var session = await this.urbit.getSession(server, this.state.user)
+    if (!session) {
+      this.setState({
+        formError: "Failed to connect",
+        formStatusStyle: styles.formError,
+        submitted: false
+      })
+      return
+    }
+
+    var result = await this.urbit.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
-      this.props.onLogin(this.urbit, this.state.user)
+      this.props.onLogin(session, this.state.user)
 
     } else {
       this.setState({

@@ -12,7 +12,7 @@ export default class JoinStation extends React.Component {
     submitted: false,
   }
 
-  urbitAnon = null
+  urbit = new Urbit()
 
   componentDidMount() {
     this.setState({ submitted: false })
@@ -24,26 +24,25 @@ export default class JoinStation extends React.Component {
       formError: "Joining...",
       formStatusStyle: styles.formLabel
     })
-    var server = 'https://' + this.state.stationShip + '.urbit.org'
-    this.urbitAnon = new Urbit(server, null)
 
     // create a session
-    await this.urbitAnon.isAuthenticated()
+    var server = 'https://' + this.state.stationShip + '.urbit.org'
+    var session = await this.urbit.getSession(server)
 
-    res = await this.urbitAnon.subscribe(
-        this.state.stationShip, "/",
+    res = await this.urbit.subscribe(
+        session, this.state.stationShip, "/",
         'talk', '/afx/' + this.state.stationChannel,
         this.props.onMessages, this.props.onPoll)
 
     if (!res) {
       this.setState({
         submitted: false,
-        formError: "Failed to join " + this.urbitAnon.formatStation(this.state.stationShip, this.state.stationChannel, true),
+        formError: "Failed to join " + this.urbit.formatStation(this.state.stationShip, this.state.stationChannel, true),
         formStatusStyle: styles.formError
       })
 
     } else {
-      this.props.onJoin(this.urbitAnon, this.state.stationShip, this.state.stationChannel)
+      this.props.onJoin(session, this.state.stationShip, this.state.stationChannel)
     }
   }
 

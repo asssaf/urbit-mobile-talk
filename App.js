@@ -31,8 +31,9 @@ export default class App extends React.Component {
     refreshing: false,
   };
 
-  urbit = null
-  urbitAnon = null
+  urbit = new Urbit()
+  pokeSession = null
+  subscribedSession = null
   listRef = null
 
   componentDidMount() {
@@ -50,11 +51,10 @@ export default class App extends React.Component {
     this.setState({ loadingStatus: "Logging in..." })
 
     var server = 'https://' + this.state.user + '.urbit.org'
-    this.urbit = new Urbit(server, this.state.user)
-    var result = await this.urbit.isAuthenticated()
+    var session = await this.urbit.getSession(server, this.state.user)
     this.setState({ loading: false })
-    if (result) {
-      this.handleLogin(this.urbit, this.state.user)
+    if (session && session.authenticated) {
+      this.handleLogin(session, this.state.user)
     }
   }
 
@@ -75,9 +75,9 @@ export default class App extends React.Component {
     }
   }
 
-  handleLogin(urbit, user) {
-    this.urbit = urbit
+  handleLogin(session, user) {
     this.setState({ user: user, loggedIn: true })
+    this.pokeSession = session
 
     // store the user for next time
     this.saveState('user', user)
@@ -89,7 +89,7 @@ export default class App extends React.Component {
   }
 
   async doLogout() {
-    var res = await this.urbit.deleteSession()
+    var res = await this.urbit.deleteSession(this.pokeSession)
     if (!res) {
       console.log("Failed to logout")
     }
@@ -97,8 +97,8 @@ export default class App extends React.Component {
     this.setState({ loggedIn: false, loggedOut: true })
   }
 
-  handleJoin(urbit, stationShip, stationChannel) {
-    this.urbitAnon = urbit
+  handleJoin(session, stationShip, stationChannel) {
+    this.subscribedSession = session
     this.setState({
       stationShip: stationShip,
       stationChannel: stationChannel,
@@ -110,7 +110,9 @@ export default class App extends React.Component {
   }
 
   async doLeave() {
-    res = await this.urbitAnon.unsubscribe(this.state.stationShip, '/', 'talk', '/afx/' + this.state.stationChannel)
+    res = await this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, '/',
+        'talk', '/afx/' + this.state.stationChannel)
+
     if (!res) {
       console.log("Failed to unsubscribe")
     }
@@ -162,7 +164,7 @@ export default class App extends React.Component {
         newMessages = newMessages.concat(this.state.messages.slice())
 
         var path = wire.substring('/refresh'.length)
-        this.urbitAnon.unsubscribe(this.state.stationShip, wire, 'talk', path)
+        this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, wire, 'talk', path)
       }
 
       this.setState({ messages: newMessages })
@@ -312,7 +314,7 @@ export default class App extends React.Component {
         }
     }
 
-    this.urbit.poke('talk', 'talk-command', '/', {
+    this.urbit.poke(this.pokeSession, 'talk', 'talk-command', '/', {
       publish: [
         message
       ]
@@ -397,8 +399,8 @@ export default class App extends React.Component {
         + '/' + this.urbit.formatNumber(start)
         + '/' + this.urbit.formatNumber(end)
 
-    var res = await this.urbitAnon.subscribe(this.state.stationShip, '/refresh' + path,
-        'talk', path, this.handleMessages.bind(this))
+    var res = await this.urbit.subscribe(this.subscribedSession, this.state.stationShip,
+        '/refresh' + path, 'talk', path, this.handleMessages.bind(this))
 
     if (!res) {
       console.log("refresh failed")
