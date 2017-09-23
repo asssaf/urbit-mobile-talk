@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity, Image, AsyncStorage } from 'react-native';
+    TouchableOpacity, Image, AsyncStorage, Alert } from 'react-native';
 import Autolink from 'react-native-autolink';
 import Header from './Header';
 import Login from './Login';
@@ -88,6 +88,13 @@ export default class App extends React.Component {
     this.setState({ loading: false })
   }
 
+  confirmLogout() {
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Ok', onPress: () => this.doLogout() },
+      { text: 'Cancel' },
+    ])
+  }
+
   async doLogout() {
     var res = await this.urbit.deleteSession(this.pokeSession)
     if (!res) {
@@ -107,6 +114,13 @@ export default class App extends React.Component {
 
     this.saveState('stationShip', stationShip)
     this.saveState('stationChannel', stationChannel)
+  }
+
+  confirmLeave() {
+    Alert.alert('Leave Channel', 'Are you sure you want to leave the channel?', [
+      { text: 'Ok', onPress: () => this.doLeave() },
+      { text: 'Cancel' },
+    ])
   }
 
   async doLeave() {
@@ -436,14 +450,14 @@ export default class App extends React.Component {
           onJoin={this.handleJoin.bind(this)}
           onMessages={this.handleMessages.bind(this)}
           onPoll={this.handlePoll.bind(this)}
-          onHeaderClick={this.doLogout.bind(this)}
+          onHeaderClick={this.confirmLogout.bind(this)}
         />
       )
     }
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={this.doLeave.bind(this)}>
+        <TouchableOpacity onPress={this.confirmLeave.bind(this)}>
           <Header title={this.formatStation(true)} />
         </TouchableOpacity>
 
