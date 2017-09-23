@@ -1,4 +1,12 @@
+import RCTNetworking from 'RCTNetworking'
+
 export default class Urbit {
+  async clearCookies() {
+    return new Promise((resolve, reject) => {
+      RCTNetworking.clearCookies((cleared) => resolve(cleared))
+    })
+  }
+
   async getSession(server, user) {
     try {
       let response = await fetch(server + "/~/auth.json", {
@@ -25,7 +33,7 @@ export default class Urbit {
       return session;
 
     } catch(error) {
-      console.error("getSession: " + error)
+      console.error("getSession: " + error + ' - ' + server)
       return null
     }
   }
@@ -47,6 +55,7 @@ export default class Urbit {
 
     try {
       let response = await fetch(session.server + "/~/auth.json?DELETE", {
+          credentials: 'same-origin',
           method: 'POST',
           body: JSON.stringify({
             oryx: session.oryx,
@@ -79,6 +88,7 @@ export default class Urbit {
     }
     try {
       let response = await fetch(session.server + "/~/auth.json?PUT", {
+          credentials: 'same-origin',
           method: 'POST',
           body: JSON.stringify({
             ship: session.user,
@@ -114,6 +124,7 @@ export default class Urbit {
     try {
       var url = session.server + "/~~/~/to/" + app + "/" + mark
       let response = await fetch(url, {
+        credentials: 'same-origin',
         method: 'POST',
         body: JSON.stringify({
           oryx: session.oryx,

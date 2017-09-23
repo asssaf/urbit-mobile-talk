@@ -10,6 +10,8 @@ export default class JoinStation extends React.Component {
     stationShip: this.props.stationShip,
     stationChannel: this.props.stationChannel,
     submitted: false,
+    customServer: this.props.server.length > 0,
+    server: this.props.server,
   }
 
   urbit = new Urbit()
@@ -25,8 +27,13 @@ export default class JoinStation extends React.Component {
       formStatusStyle: styles.formLabel
     })
 
-    // create a session
-    var server = 'https://' + this.state.stationShip + '.urbit.org'
+    var server
+    if (this.state.customServer && this.state.server.length > 0) {
+      server = this.state.server
+
+    } else {
+      server = 'https://' + this.state.stationShip + '.urbit.org'
+    }
     var session = await this.urbit.getSession(server)
 
     res = await this.urbit.subscribe(
@@ -42,7 +49,8 @@ export default class JoinStation extends React.Component {
       })
 
     } else {
-      this.props.onJoin(session, this.state.stationShip, this.state.stationChannel)
+      this.props.onJoin(session, this.state.stationShip, this.state.stationChannel,
+          this.state.customServer ? this.state.server : '')
     }
   }
 
@@ -60,6 +68,10 @@ export default class JoinStation extends React.Component {
     }
 
     return false
+  }
+
+  toggleCustomServer() {
+    this.setState({ customServer: !this.state.customServer })
   }
 
   render() {
@@ -97,6 +109,24 @@ export default class JoinStation extends React.Component {
           <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
         </View>
 
+        <TouchableOpacity disabled={this.state.submitted} onPress={this.toggleCustomServer.bind(this)}>
+          <Text style={this.state.submitted ? styles.sendDisabled : styles.send}>Use custom server</Text>
+        </TouchableOpacity>
+
+        {this.state.customServer &&
+          <View style={styles.formRow}>
+            <Text style={styles.formLabel}>Server</Text>
+            <TextInput
+              editable={!this.state.submitted}
+              value={this.state.server}
+              onChangeText={text => this.setState({server: text.trim()})}
+              style={styles.input}
+              underlineColorAndroid="transparent"
+              placeholder="https://ship.urbit.org"
+            />
+          </View>
+        }
+
         <TouchableOpacity disabled={this.isDisabled()} onPress={this.doJoin.bind(this)}>
           <Text style={this.isDisabled() ? styles.sendDisabled : styles.send }>Join</Text>
         </TouchableOpacity>
@@ -104,7 +134,6 @@ export default class JoinStation extends React.Component {
       </View>
     )
   }
-
 }
 
 const styles = StyleSheet.create({

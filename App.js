@@ -8,6 +8,7 @@ import Loading from './Loading';
 import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
+
 function _isUrl(s) {
   var pattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
   var re = new RegExp(pattern)
@@ -23,8 +24,10 @@ export default class App extends React.Component {
     loadingStatus: "Loading...",
     typing: "",
     user: "",
+    server: "",
     stationShip: "",
     stationChannel: "",
+    stationServer: "",
     messages: [],
     lastUpdate: null,
     firstItem: -1,
@@ -36,8 +39,8 @@ export default class App extends React.Component {
   subscribedSession = null
   listRef = null
 
-  componentDidMount() {
-    this.loadState([ 'user', 'stationShip', 'stationChannel' ])
+  async componentDidMount() {
+    this.loadState([ 'user', 'server', 'stationShip', 'stationChannel', 'stationServer' ])
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
   }
@@ -49,12 +52,17 @@ export default class App extends React.Component {
     }
 
     this.setState({ loadingStatus: "Logging in..." })
+    var server
+    if (this.state.server.length > 0) {
+      server = this.state.server
 
-    var server = 'https://' + this.state.user + '.urbit.org'
+    } else {
+      server = 'https://' + this.state.user + '.urbit.org'
+    }
     var session = await this.urbit.getSession(server, this.state.user)
     this.setState({ loading: false })
     if (session && session.authenticated) {
-      this.handleLogin(session, this.state.user)
+      this.handleLogin(session, this.state.user, this.state.server)
     }
   }
 
@@ -75,12 +83,13 @@ export default class App extends React.Component {
     }
   }
 
-  handleLogin(session, user) {
-    this.setState({ user: user, loggedIn: true })
+  handleLogin(session, user, server) {
+    this.setState({ user: user, server: server, loggedIn: true })
     this.pokeSession = session
 
     // store the user for next time
     this.saveState('user', user)
+    this.saveState('server', server)
   }
 
   handleLoadingCancel() {
@@ -104,16 +113,18 @@ export default class App extends React.Component {
     this.setState({ loggedIn: false, loggedOut: true })
   }
 
-  handleJoin(session, stationShip, stationChannel) {
+  handleJoin(session, stationShip, stationChannel, server) {
     this.subscribedSession = session
     this.setState({
       stationShip: stationShip,
       stationChannel: stationChannel,
+      stationServer: server,
       inChannel: true
     })
 
     this.saveState('stationShip', stationShip)
     this.saveState('stationChannel', stationChannel)
+    this.saveState('stationServer', server)
   }
 
   confirmLeave() {
@@ -438,6 +449,7 @@ export default class App extends React.Component {
       return (
         <Login
           user={this.state.user}
+          server={this.state.server}
           onLogin={this.handleLogin.bind(this)}
           loggedOut={this.loggedOut}
         />
@@ -449,6 +461,7 @@ export default class App extends React.Component {
         <JoinStation
           stationShip={this.state.stationShip}
           stationChannel={this.state.stationChannel}
+          server={this.state.stationServer}
           onJoin={this.handleJoin.bind(this)}
           onMessages={this.handleMessages.bind(this)}
           onPoll={this.handlePoll.bind(this)}

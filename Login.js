@@ -10,6 +10,8 @@ export default class Login extends React.Component {
     user: this.props.user,
     code: "",
     submitted: false,
+    customServer: this.props.server.length > 0,
+    server: this.props.server,
   }
 
   urbit = new Urbit()
@@ -25,7 +27,13 @@ export default class Login extends React.Component {
       formStatusStyle: styles.formLabel
     })
 
-    var server = 'https://' + this.state.user + '.urbit.org'
+    var server
+    if (this.state.customServer && this.state.server.length > 0) {
+      server = this.state.server
+
+    } else {
+      server = 'https://' + this.state.user + '.urbit.org'
+    }
     var session = await this.urbit.getSession(server, this.state.user)
     if (!session) {
       this.setState({
@@ -39,7 +47,7 @@ export default class Login extends React.Component {
     var result = await this.urbit.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
-      this.props.onLogin(session, this.state.user)
+      this.props.onLogin(session, this.state.user, this.state.customServer ? this.state.server : '')
 
     } else {
       this.setState({
@@ -64,6 +72,10 @@ export default class Login extends React.Component {
     }
 
     return false
+  }
+
+  toggleCustomServer() {
+    this.setState({ customServer: !this.state.customServer })
   }
 
   render() {
@@ -99,6 +111,24 @@ export default class Login extends React.Component {
         <View style={styles.formRow}>
           <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
         </View>
+
+        <TouchableOpacity disabled={this.state.submitted} onPress={this.toggleCustomServer.bind(this)}>
+          <Text style={this.state.submitted ? styles.sendDisabled : styles.send}>Use custom server</Text>
+        </TouchableOpacity>
+
+        {this.state.customServer &&
+          <View style={styles.formRow}>
+            <Text style={styles.formLabel}>Server</Text>
+            <TextInput
+              editable={!this.state.submitted}
+              value={this.state.server}
+              onChangeText={text => this.setState({server: text.trim()})}
+              style={styles.input}
+              underlineColorAndroid="transparent"
+              placeholder="https://ship.urbit.org"
+            />
+          </View>
+        }
 
         <TouchableOpacity disabled={this.isDisabled()} onPress={this.doLogin.bind(this)}>
           <Text style={this.isDisabled() ? styles.sendDisabled : styles.send}>Login</Text>
