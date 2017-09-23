@@ -99,6 +99,8 @@ export default class Urbit {
       }
 
       session.authenticated = true
+      session.oryx = responseJson.oryx
+      session.ixor = responseJson.ixor
       console.log("Authenticated successfully")
       return true
 
