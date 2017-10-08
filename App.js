@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity, Image, AsyncStorage, Alert } from 'react-native';
+    TouchableOpacity, Image, AsyncStorage, Alert, Linking } from 'react-native';
 import Autolink from 'react-native-autolink';
 import Header from './Header';
 import Login from './Login';
@@ -207,6 +207,8 @@ export default class App extends React.Component {
   }
 
   processSpeech(serial, date, sender, speech) {
+    var type = Object.keys(speech)[0]
+
     var items = []
 
     var item = {
@@ -219,10 +221,10 @@ export default class App extends React.Component {
     var message = {
       key: serial,
       ts: date,
-      style: styles.message
+      style: styles.message,
+      type: type,
     }
 
-    var type = Object.keys(speech)[0]
     if (type == 'lin' || type == 'url' || type == 'exp') {
       message["text"] = speech[type].txt
 
@@ -523,9 +525,23 @@ export default class App extends React.Component {
   }
 
   renderItemMessage(message) {
+    var linkOrText
+    if (message.type == 'url') {
+      linkOrText = (
+        <TouchableOpacity onPress={() => Linking.openURL(message.text)}>
+          <Text style={styles.messageUrl}>{message.text}</Text>
+        </TouchableOpacity>
+      )
+
+    } else {
+      linkOrText = (
+        <Autolink style={message.style} text={message.text} />
+      )
+    }
+
     return (
       <View key={message['key']}>
-        <Autolink style={message.style} text={message.text} />
+        {linkOrText}
         {message.attachment &&
           <View style={styles.attachment}>
             <Text>{message.attachment}</Text>
@@ -572,6 +588,10 @@ const styles = StyleSheet.create({
   messageCode: {
     fontSize: 16,
     fontFamily: 'monospace'
+  },
+  messageUrl: {
+    fontSize: 16,
+    color: '#0E7AFE',
   },
   attachment: {
     borderColor: 'black',
