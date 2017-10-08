@@ -9,7 +9,7 @@ import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
 function _isUrl(s) {
-  var pattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
+  var pattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
   var re = new RegExp(pattern)
   return s.match(re)
 }
