@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
 import Header from './Header';
 import Urbit from './Urbit';
 
@@ -109,12 +109,10 @@ export default class Login extends React.Component {
         </View>
 
         <View style={styles.formRow}>
-          <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
+          <Text style={styles.formLabel}>Use custom server</Text>
+          <Switch disabled={this.state.submitted} value={this.state.customServer}
+              onValueChange={this.toggleCustomServer.bind(this)} />
         </View>
-
-        <TouchableOpacity disabled={this.state.submitted} onPress={this.toggleCustomServer.bind(this)}>
-          <Text style={this.state.submitted ? styles.sendDisabled : styles.send}>Use custom server</Text>
-        </TouchableOpacity>
 
         {this.state.customServer &&
           <View style={styles.formRow}>
@@ -129,6 +127,10 @@ export default class Login extends React.Component {
             />
           </View>
         }
+
+        <View style={styles.formRow}>
+          <Text style={this.state.formStatusStyle}>{this.state.formError}</Text>
+        </View>
 
         <TouchableOpacity disabled={this.isDisabled()} onPress={this.doLogin.bind(this)}>
           <Text style={this.isDisabled() ? styles.sendDisabled : styles.send}>Login</Text>
