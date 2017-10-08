@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Urbit Mobile Talk",
-    "icon": "./icon.png",
+    "icon": "./urbit-mobile-talk.png",
     "version": "0.6.0",
     "slug": "urbit-mobile-talk",
     "sdkVersion": "20.0.0",
