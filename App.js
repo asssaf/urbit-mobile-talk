@@ -465,16 +465,14 @@ export default class App extends React.Component {
           onJoin={this.handleJoin.bind(this)}
           onMessages={this.handleMessages.bind(this)}
           onPoll={this.handlePoll.bind(this)}
-          onHeaderClick={this.confirmLogout.bind(this)}
+          onBackPress={this.confirmLogout.bind(this)}
         />
       )
     }
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={this.confirmLeave.bind(this)}>
-          <Header title={this.formatStation(true)} />
-        </TouchableOpacity>
+        <Header title={this.formatStation(true)} onLeftButtonPress={this.confirmLeave.bind(this)}/>
 
         <FlatList
           ref={(list) => this.listRef = list}

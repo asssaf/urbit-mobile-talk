@@ -77,9 +77,7 @@ export default class JoinStation extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={this.props.onHeaderClick}>
-          <Header title="Join a Station" />
-        </TouchableOpacity>
+        <Header title="Join a Station" onLeftButtonPress={this.props.onBackPress} />
 
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Ship</Text>
