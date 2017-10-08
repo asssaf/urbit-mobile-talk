@@ -9,6 +9,7 @@ export default class Loading extends React.Component {
         <TouchableOpacity onPress={this.props.onCancel}>
           <Text style={styles.send}>Cancel</Text>
         </TouchableOpacity>
+        <Text style={{position: 'absolute', bottom: 0}}>{Expo.Constants.manifest.version}</Text>
       </View>
     )
   }
