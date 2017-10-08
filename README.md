@@ -10,7 +10,7 @@ Download and install the Expo app for iOS/android.
 Go to the app URL for a QR code: https://expo.io/@asssaf/urbit-mobile-talk
 
 ### Standalone app
-"Standalone" apks (that contain the Expo sdk) for android can be downloaded from [here](https://github.com/asssaf/urbit-mobile-talk/releases/download/v0.2.0/android.2F.asssaf.2Furbit-mobile-talk-f280dfb2-99c8-11e7-b147-0a580a780036-signed.apk).
+"Standalone" apks (that contain the Expo sdk) for android can be downloaded from [here](https://github.com/asssaf/urbit-mobile-talk/releases/download/v0.6.0/android.2F.asssaf.2Furbit-mobile-talk-79d8d707-ac73-11e7-8b16-0a580a78015c-signed.apk).
 
 ## Running from source code
 ```
