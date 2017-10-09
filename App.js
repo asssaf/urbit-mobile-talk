@@ -6,7 +6,6 @@ import { Notifications } from 'expo';
 import Header from './Header';
 import Login from './Login';
 import Loading from './Loading';
-import JoinStation from './JoinStation';
 import Urbit from "./Urbit";
 
 
@@ -26,13 +25,11 @@ export default class App extends React.Component {
     typing: "",
     user: "",
     server: "",
-    stationShip: "",
-    stationChannel: "",
-    stationServer: "",
     messages: [],
     lastUpdate: null,
     firstItem: -1,
     refreshing: false,
+    audience: null,
   };
 
   urbit = new Urbit()
@@ -41,7 +38,7 @@ export default class App extends React.Component {
   listRef = null
 
   async componentDidMount() {
-    this.loadState([ 'user', 'server', 'stationShip', 'stationChannel', 'stationServer' ])
+    this.loadState([ 'user', 'server' ])
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
   }
@@ -84,13 +81,24 @@ export default class App extends React.Component {
     }
   }
 
-  handleLogin(session, user, server) {
+  async handleLogin(session, user, server) {
     this.setState({ user: user, server: server, loggedIn: true })
     this.pokeSession = session
 
     // store the user for next time
     this.saveState('user', user)
     this.saveState('server', server)
+
+    var wire = "/messages"
+    var path = "/f/" + this.urbit.getPorch(user)
+    var res = await this.urbit.subscribe(session, user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
+
+    if (res) {
+      this.setState({ inChannel: true })
+
+    } else {
+      console.log("Failed to load from " + porch)
+    }
   }
 
   handleLoadingCancel() {
@@ -106,6 +114,8 @@ export default class App extends React.Component {
   }
 
   async doLogout() {
+    await this.doLeave()
+
     var res = await this.urbit.deleteSession(this.pokeSession)
     if (!res) {
       console.log("Failed to logout")
@@ -114,30 +124,9 @@ export default class App extends React.Component {
     this.setState({ loggedIn: false, loggedOut: true })
   }
 
-  handleJoin(session, stationShip, stationChannel, server) {
-    this.subscribedSession = session
-    this.setState({
-      stationShip: stationShip,
-      stationChannel: stationChannel,
-      stationServer: server,
-      inChannel: true
-    })
-
-    this.saveState('stationShip', stationShip)
-    this.saveState('stationChannel', stationChannel)
-    this.saveState('stationServer', server)
-  }
-
-  confirmLeave() {
-    Alert.alert('Leave Channel', 'Are you sure you want to leave the channel?', [
-      { text: 'Ok', onPress: () => this.doLeave() },
-      { text: 'Cancel' },
-    ])
-  }
-
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, '/',
-        'talk', '/afx/' + this.state.stationChannel)
+    res = await this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, '/messages',
+        'talk', 'f/' + this.urbit.getPorch(this.state.user))
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -183,6 +172,7 @@ export default class App extends React.Component {
             t.thought.serial,
             t.thought.statement.date,
             t.ship,
+            Object.keys(t.thought.audience),
             speech)
 
         for (var i = 0; i < messages.length; ++i) {
@@ -205,6 +195,11 @@ export default class App extends React.Component {
 
       if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
         this.setState({ firstItem: data.grams.num })
+      }
+
+      if (this.state.audience === null) {
+        var audience = newMessages[newMessages.length - 1].audience
+        this.setState({ audience: audience})
       }
 
       var updatedMessages
@@ -234,7 +229,9 @@ export default class App extends React.Component {
   }
 
   addMessage(messages, newMessage) {
-    if (messages.length > 0 && messages[messages.length - 1].sender == newMessage.sender
+    if (messages.length > 0
+        && messages[messages.length - 1].sender == newMessage.sender
+        && this.sameAudience(messages[messages.length - 1].audience, newMessage.audience)
         && ((newMessage.ts - messages[messages.length - 1].ts)) < 3600000) {
       item = messages[messages.length - 1]
       item.messages.push(newMessage.messages[0])
@@ -244,7 +241,11 @@ export default class App extends React.Component {
     }
   }
 
-  processSpeech(serial, date, sender, speech) {
+  sameAudience(audience1, audience2) {
+    return audience1.length == audience2.length && audience1.every((a, i) => a == audience2[i])
+  }
+
+  processSpeech(serial, date, sender, audience, speech) {
     var type = Object.keys(speech)[0]
 
     var items = []
@@ -252,6 +253,7 @@ export default class App extends React.Component {
     var item = {
       key: serial,
       sender: sender,
+      audience: audience,
       ts: date,
       messages: [],
     }
@@ -280,13 +282,13 @@ export default class App extends React.Component {
       var subItems = speech.mor
       var i
       for (i = 0; i < subItems.length; ++i) {
-        items = items.concat(this.processSpeech(serial + "/" + i, date, sender, subItems[i]))
+        items = items.concat(this.processSpeech(serial + "/" + i, date, sender, audience, subItems[i]))
       }
 
       item = null
 
     } else if (type == 'fat') {
-      items = this.processSpeech(serial + 1, date, sender, speech.fat.taf)
+      items = this.processSpeech(serial + 1, date, sender, audience, speech.fat.taf)
       item = null
       message = items[0].messages[0]
 
@@ -348,16 +350,16 @@ export default class App extends React.Component {
   }
 
   async sendMessageSpeech(speech) {
-    var aud = this.formatStation()
     var audi = {}
-    audi[aud] = {
-      envelope: {
-        visible: true,
-        sender: null
-      },
-      delivery: "pending"
-    }
-
+    this.state.audience.forEach(aud => {
+      audi[aud] = {
+        envelope: {
+          visible: true,
+          sender: null
+        },
+        delivery: "pending"
+      }
+    })
     var message = {
         serial: this.urbit.uuid32(),
         audience: audi,
@@ -483,23 +485,12 @@ export default class App extends React.Component {
       );
     }
 
-    if (!this.state.inChannel) {
-      return (
-        <JoinStation
-          stationShip={this.state.stationShip}
-          stationChannel={this.state.stationChannel}
-          server={this.state.stationServer}
-          onJoin={this.handleJoin.bind(this)}
-          onMessages={this.handleMessages.bind(this)}
-          onPoll={this.handlePoll.bind(this)}
-          onBackPress={this.confirmLogout.bind(this)}
-        />
-      )
-    }
-
     return (
       <View style={styles.container}>
-        <Header title={this.formatStation(true)} onLeftButtonPress={this.confirmLeave.bind(this)}/>
+        <Header
+          title={'~' + this.urbit.formatShip(this.state.user, true)}
+          onLeftButtonPress={this.confirmLogout.bind(this)}
+        />
 
         <FlatList
           ref={(list) => this.listRef = list}
@@ -512,21 +503,39 @@ export default class App extends React.Component {
 
         <KeyboardAvoidingView behavior="padding">
           <View style={styles.footer}>
-            <TextInput
-              value={this.state.typing}
-              onChangeText={text => this.setState({typing: text})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="Type something nice"
-            />
+            <View style={styles.footerAudience}>
+              <TextInput
+                value={this.formatAudience(this.state.audience)}
+                onChangeText={text => this.setState({ audience: text.split(/,\s*/) })}
+                style={styles.input}
+                underlineColorAndroid="transparent"
+                placeholder="Audience"
+              />
+            </View>
+            <View style={styles.footerRow}>
+              <TextInput
+                value={this.state.typing}
+                onChangeText={text => this.setState({typing: text})}
+                style={styles.input}
+                underlineColorAndroid="transparent"
+                placeholder="Type something nice"
+              />
 
-            <TouchableOpacity onPress={this.sendMessage.bind(this)}>
-              <Text style={styles.send}>Send</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={this.sendMessage.bind(this)}>
+                <Text style={styles.send}>Send</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
     );
+  }
+
+  formatAudience(audience) {
+    if (audience == null) {
+      return null
+    }
+    return audience.join(", ")
   }
 
   getAvatarUrl(item) {
@@ -537,6 +546,7 @@ export default class App extends React.Component {
     var avatarUrl = this.getAvatarUrl(item)
 
     var sender = this.urbit.formatShip(item.sender, true)
+    var audience = this.formatAudience(item.audience)
     var time
     if (new Date().toLocaleDateString() == new Date(item.ts).toLocaleDateString()) {
       time = new Date(item.ts).toLocaleTimeString()
@@ -557,6 +567,7 @@ export default class App extends React.Component {
           <View style={styles.itemHeader}>
             <Text style={styles.sender}>~{sender}</Text>
             <Text style={styles.timestamp}>{time}</Text>
+            <Text style={styles.audience}>{audience}</Text>
           </View>
           <View>
             {messages}
@@ -649,11 +660,23 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     paddingRight: 10,
-    color: 'gray'
+    color: 'gray',
+  },
+  audience: {
+    paddingRight: 10,
+    color: 'gray',
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     backgroundColor: '#eee',
+  },
+  footerAudience: {
+    height: 50,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black',
+  },
+  footerRow: {
+    flexDirection: 'row',
   },
   input: {
     paddingHorizontal: 20,

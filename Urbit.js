@@ -319,4 +319,16 @@ export default class Urbit {
     }
     return ship
   }
+
+  getPorch(ship) {
+    if (ship.length == 3) {
+      return "court"
+
+    } else if (ship.length == 7) {
+      return "floor"
+
+    } else {
+      return "porch"
+    }
+  }
 }
