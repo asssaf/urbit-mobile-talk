@@ -27,7 +27,7 @@ export default class Urbit {
         oryx: responseJson.oryx,
         ixor: responseJson.ixor,
         event: -1,
-        subscriptions: 0,
+        subscriptions: {},
       }
 
       return session;
@@ -149,6 +149,11 @@ export default class Urbit {
 
   async subscribe(session, ship, wire, app, path, callback, pollback) {
     try {
+      if (session.subscriptions[wire]) {
+        console.log("Already subscribed to wire: " + wire)
+        return false
+      }
+
       var url = session.server + "/~/is/~" + ship + "/" + app
       if (path != '/') {
         url += path
@@ -178,10 +183,10 @@ export default class Urbit {
 
       var responseJson = await response.json()
       console.log("Subscribed successfully: " + wire)
-      session.subscriptions++
+      session.subscriptions[wire] = callback
       if (session.event == -1) {
         session.event = 1;
-        this.poll(session, callback, pollback);
+        this.poll(session, pollback);
       }
       return true
 
@@ -193,6 +198,10 @@ export default class Urbit {
 
   async unsubscribe(session, ship, wire, app, path) {
     try {
+      if (!session.subscriptions[wire]) {
+        console.log("Not subscribed to wire: " + wire)
+        return true
+      }
       var url = session.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
       let response = await fetch(url, {
         credentials: "same-origin",
@@ -215,8 +224,8 @@ export default class Urbit {
         return false
       }
 
-      session.subscriptions--
-      if (session.subscriptions == 0) {
+      delete session.subscriptions[wire]
+      if (Object.keys(session.subscriptions).length === 0) {
         // cancel polling
         session.event = -1
       }
@@ -230,7 +239,7 @@ export default class Urbit {
     }
   }
 
-  async poll(session, callback, pollback) {
+  async poll(session, pollback) {
     while (true) {
       try {
         var url = session.server + "/~/of/" + session.ixor + "?poll=" + session.event
@@ -254,12 +263,21 @@ export default class Urbit {
         var responseJson = await response.json()
         if (!responseJson.beat) {
           // got a change
-          if (responseJson.type == 'rush') {
-            callback(responseJson.from.path, responseJson.data.json)
+          var wire = responseJson.from.path
+          var callback = session.subscriptions[wire]
 
-          } else if (responseJson.type == 'quit') {
-            callback(responseJson.from.path, null)
+          if (callback) {
+            if (responseJson.type == 'rush') {
+              callback(wire, responseJson.data.json)
+
+            } else if (responseJson.type == 'quit') {
+              callback(wire, null)
+            }
+
+          } else {
+            console.log("No callback for wire: " + wire)
           }
+
           session.event++
         }
 
