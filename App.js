@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage, Alert, Linking } from 'react-native';
 import Autolink from 'react-native-autolink';
+import { Notifications } from 'expo';
 import Header from './Header';
 import Login from './Login';
 import Loading from './Loading';
@@ -150,6 +151,16 @@ export default class App extends React.Component {
     })
   }
 
+  presentNotification(title, body, iconUrl) {
+    var localNotification = {
+      title: title,
+      body: body,
+      icon: iconUrl,
+    }
+
+    Notifications.presentLocalNotificationAsync(localNotification);
+  }
+
   handleMessages(wire, data) {
     var isRefresh = wire.startsWith('/refresh')
 
@@ -165,13 +176,7 @@ export default class App extends React.Component {
 
     } else if (data.grams) {
       var newMessages = []
-      if (!isRefresh) {
-        newMessages = this.state.messages.slice()
-      }
 
-      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
-        this.setState({ firstItem: data.grams.num })
-      }
       data.grams.tele.forEach(t => {
         var speech = t.thought.statement.speech
         var messages = this.processSpeech(
@@ -185,14 +190,34 @@ export default class App extends React.Component {
         }
       })
 
+      if (!isRefresh && this.state.firstItem != -1) {
+        newMessages.forEach(m => {
+          var title = "~" + this.urbit.formatShip(m.sender, true)
+          // merge sub messages for the item
+          var body = ""
+          m.messages.forEach(sub => body += sub["text"])
+          var iconUrl = this.getAvatarUrl(m)
+          this.presentNotification(title, body, iconUrl)
+        })
+      }
+
+      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
+        this.setState({ firstItem: data.grams.num })
+      }
+
+      var updatedMessages
       if (isRefresh) {
-        newMessages = newMessages.concat(this.state.messages.slice())
+        updatedMessages = newMessages.concat(this.state.messages.slice())
 
         var path = wire.substring('/refresh'.length)
         this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, wire, 'talk', path)
+
+      } else {
+        updatedMessages = this.state.messages.slice()
+        newMessages.forEach(m => this.addMessage(updatedMessages, m))
       }
 
-      this.setState({ messages: newMessages })
+      this.setState({ messages: updatedMessages })
       if (isRefresh) {
         this.setState({ refreshing: false })
 
@@ -502,8 +527,12 @@ export default class App extends React.Component {
     );
   }
 
+  getAvatarUrl(item) {
+    return 'https://robohash.org/~.~' + item.sender
+  }
+
   renderItem({item}) {
-    var avatarUrl = 'https://robohash.org/~.~'+item.sender
+    var avatarUrl = this.getAvatarUrl(item)
 
     var sender = this.urbit.formatShip(item.sender, true)
     var time

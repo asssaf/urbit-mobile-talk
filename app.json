@@ -1,10 +1,18 @@
 {
   "expo": {
     "name": "Urbit Mobile Talk",
-    "icon": "./urbit-mobile-talk.png",
-    "version": "0.6.0",
+    "icon": "./assets/images/urbit-mobile-talk.png",
+    "version": "0.7.0",
     "slug": "urbit-mobile-talk",
     "sdkVersion": "20.0.0",
+    "loading": {
+      "icon": "./assets/images/urbit-mobile-talk.png"
+    },
+    "notification": {
+      "icon": "./assets/images/urbit-mobile-talk-notification.png",
+      "androidMode": "collapse",
+      "androidCollapsedTitle": "#{unread_notifications} new messages"
+    },
     "ios": {
       "bundleIdentifier": "com.replaythat.urbitmobiletalk"
     },
