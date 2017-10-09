@@ -192,12 +192,14 @@ export default class App extends React.Component {
 
       if (!isRefresh && this.state.firstItem != -1) {
         newMessages.forEach(m => {
-          var title = "~" + this.urbit.formatShip(m.sender, true)
-          // merge sub messages for the item
-          var body = ""
-          m.messages.forEach(sub => body += sub["text"])
-          var iconUrl = this.getAvatarUrl(m)
-          this.presentNotification(title, body, iconUrl)
+          if (m.sender != this.state.user) {
+            var title = "~" + this.urbit.formatShip(m.sender, true)
+            // merge sub messages for the item
+            var body = ""
+            m.messages.forEach(sub => body += sub["text"])
+            var iconUrl = this.getAvatarUrl(m)
+            this.presentNotification(title, body, iconUrl)
+          }
         })
       }
 
