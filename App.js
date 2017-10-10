@@ -33,8 +33,7 @@ export default class App extends React.Component {
   };
 
   urbit = new Urbit()
-  pokeSession = null
-  subscribedSession = null
+  session = null
   listRef = null
 
   async componentDidMount() {
@@ -83,7 +82,7 @@ export default class App extends React.Component {
 
   async handleLogin(session, user, server) {
     this.setState({ user: user, server: server, loggedIn: true })
-    this.pokeSession = session
+    this.session = session
 
     // store the user for next time
     this.saveState('user', user)
@@ -116,7 +115,7 @@ export default class App extends React.Component {
   async doLogout() {
     await this.doLeave()
 
-    var res = await this.urbit.deleteSession(this.pokeSession)
+    var res = await this.urbit.deleteSession(this.session)
     if (!res) {
       console.log("Failed to logout")
     }
@@ -125,8 +124,8 @@ export default class App extends React.Component {
   }
 
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, '/messages',
-        'talk', 'f/' + this.urbit.getPorch(this.state.user))
+    res = await this.urbit.unsubscribe(this.session, this.state.user, '/messages',
+        'talk', '/f/' + this.urbit.getPorch(this.state.user))
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -207,7 +206,7 @@ export default class App extends React.Component {
         updatedMessages = newMessages.concat(this.state.messages.slice())
 
         var path = wire.substring('/refresh'.length)
-        this.urbit.unsubscribe(this.subscribedSession, this.state.stationShip, wire, 'talk', path)
+        this.urbit.unsubscribe(this.session, this.state.user, wire, 'talk', path)
 
       } else {
         updatedMessages = this.state.messages.slice()
@@ -370,7 +369,7 @@ export default class App extends React.Component {
         }
     }
 
-    this.urbit.poke(this.pokeSession, 'talk', 'talk-command', '/', {
+    this.urbit.poke(this.session, 'talk', 'talk-command', '/', {
       publish: [
         message
       ]
@@ -451,11 +450,11 @@ export default class App extends React.Component {
     var maxFetchItems = 32
     var end = this.state.firstItem + 1
     var start = Math.max(0, end - maxFetchItems)
-    var path = '/afx/' + this.state.stationChannel
+    var path = '/f/' + this.urbit.getPorch(this.state.user)
         + '/' + this.urbit.formatNumber(start)
         + '/' + this.urbit.formatNumber(end)
 
-    var res = await this.urbit.subscribe(this.subscribedSession, this.state.stationShip,
+    var res = await this.urbit.subscribe(this.session, this.state.user,
         '/refresh' + path, 'talk', path, this.handleMessages.bind(this))
 
     if (!res) {
