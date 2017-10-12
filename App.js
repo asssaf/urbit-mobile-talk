@@ -25,7 +25,7 @@ export default class App extends React.Component {
     typing: "",
     user: "",
     server: "",
-    messages: [],
+    items: [],
     lastUpdate: null,
     firstItem: -1,
     refreshing: false,
@@ -133,7 +133,7 @@ export default class App extends React.Component {
 
     this.setState({
       inChannel: false,
-      messages: [],
+      items: [],
       refreshing: false,
       firstItem: -1
     })
@@ -163,32 +163,24 @@ export default class App extends React.Component {
       }
 
     } else if (data.grams) {
-      var newMessages = []
-
+      var newItems = []
       data.grams.tele.forEach(t => {
-        var speech = t.thought.statement.speech
-        var messages = this.processSpeech(
-            t.thought.serial,
-            t.thought.statement.date,
-            t.ship,
-            Object.keys(t.thought.audience),
-            speech)
-
-        for (var i = 0; i < messages.length; ++i) {
-          this.addMessage(newMessages, messages[i])
-        }
+        t.subMessages = this.processSpeech(t, t.thought.statement.speech)
+        this.addMessage(newItems, t)
       })
 
+
       if (!isRefresh && this.state.firstItem != -1) {
-        newMessages.forEach(m => {
-          if (m.sender != this.state.user) {
-            var title = "~" + this.urbit.formatShip(m.sender, true)
+        newItems.filter(item => { item.ship !== this.state.user }).forEach(item => {
+          item.messages.forEach(m => {
+            var messages = this.processSpeech(m, m.thought.statement.speech)
+            var title = "~" + this.urbit.formatShip(m.ship, true)
             // merge sub messages for the item
             var body = ""
-            m.messages.forEach(sub => body += sub["text"])
+            messages.forEach(sub => body += sub["text"])
             var iconUrl = this.getAvatarUrl(m)
             this.presentNotification(title, body, iconUrl)
-          }
+          })
         })
       }
 
@@ -197,23 +189,24 @@ export default class App extends React.Component {
       }
 
       if (this.state.audience === null) {
-        var audience = newMessages[newMessages.length - 1].audience
-        this.setState({ audience: audience})
+        var lastItem = newItems[newItems.length - 1]
+        var audience = Object.keys(lastItem.messages[0].thought.audience)
+        this.setState({ audience: audience })
       }
 
-      var updatedMessages
+      var updatedItems
       if (isRefresh) {
-        updatedMessages = newMessages.concat(this.state.messages.slice())
+        updatedItems = newItems.concat(this.state.items.slice())
 
         var path = wire.substring('/refresh'.length)
         this.urbit.unsubscribe(this.session, this.state.user, wire, 'talk', path)
 
       } else {
-        updatedMessages = this.state.messages.slice()
-        newMessages.forEach(m => this.addMessage(updatedMessages, m))
+        // concatenate with possible merge of middle item
+        updatedItems = this.concatItems(this.state.items.slice(), newItems)
       }
 
-      this.setState({ messages: updatedMessages })
+      this.setState({ items: updatedItems })
       if (isRefresh) {
         this.setState({ refreshing: false })
 
@@ -227,42 +220,76 @@ export default class App extends React.Component {
     this.setState({ lastUpdate: new Date() })
   }
 
-  addMessage(messages, newMessage) {
-    if (messages.length > 0
-        && messages[messages.length - 1].sender == newMessage.sender
-        && this.sameAudience(messages[messages.length - 1].audience, newMessage.audience)
-        && ((newMessage.ts - messages[messages.length - 1].ts)) < 3600000) {
-      item = messages[messages.length - 1]
-      item.messages.push(newMessage.messages[0])
+  /**
+   * concatenate arrays of items, possibly merging the middle item
+   */
+  concatItems(items, newItems) {
+    // see if first new item can be merged with last old item
+    if (items.length > 0) {
+      var lastItem = items[items.length - 1]
+      if (this.canMerge(lastItem, newItems[0].messages[0])) {
+        lastItem.messages = lastItem.messages.concat(newItems[0].messages)
+        newItems = newItems.slice(1)
+      }
+    }
+
+    return items.concat(newItems)
+  }
+
+  /**
+   * add a new message, either as a new item or merged into the last item
+   */
+  addMessage(items, newMessage) {
+    if (items.length == 0 || !this.canMerge(items[items.length - 1], newMessage)) {
+      newItem = {
+        key: newMessage.thought.serial,
+        messages: [newMessage]
+      }
+      items.push(newItem)
 
     } else {
-      messages.push(newMessage)
+      items[items.length - 1].messages.push(newMessage)
     }
+  }
+
+  /**
+   * check whether a message can be merged into the last item
+   */
+  canMerge(item, newMessage) {
+    var lastMessage = item.messages[item.messages.length - 1]
+    if (lastMessage.ship !== newMessage.ship) {
+      return false
+    }
+
+    if (!this.sameAudience(Object.keys(lastMessage.thought.audience),
+        Object.keys(newMessage.thought.audience))) {
+      return false
+    }
+
+    if (newMessage.thought.statement.date - lastMessage.thought.statement.date > 3600000) {
+      return false
+    }
+
+    return true
   }
 
   sameAudience(audience1, audience2) {
     return audience1.length == audience2.length && audience1.every((a, i) => a == audience2[i])
   }
 
-  processSpeech(serial, date, sender, audience, speech) {
+  processSpeech(m, speech, serial) {
     var type = Object.keys(speech)[0]
 
-    var items = []
-
-    var item = {
-      key: serial,
-      sender: sender,
-      audience: audience,
-      ts: date,
-      messages: [],
-    }
-
     var message = {
-      key: serial,
-      ts: date,
+      key: m.thought.serial,
+      date: m.thought.statement.date,
+      sender: m.ship,
+      audience: m.thought.audience,
       style: styles.message,
       type: type,
     }
+
+    var messages = [message]
 
     if (type == 'lin' || type == 'url' || type == 'exp') {
       message["text"] = speech[type].txt
@@ -281,15 +308,12 @@ export default class App extends React.Component {
       var subItems = speech.mor
       var i
       for (i = 0; i < subItems.length; ++i) {
-        items = items.concat(this.processSpeech(serial + "/" + i, date, sender, audience, subItems[i]))
+        messages = messages.concat(this.processSpeech(m, subItems[i], serial + "/" + i))
       }
 
-      item = null
-
     } else if (type == 'fat') {
-      items = this.processSpeech(serial + 1, date, sender, audience, speech.fat.taf)
-      item = null
-      message = items[0].messages[0]
+      messages = this.processSpeech(m, speech.fat.taf, serial + 1)
+      message = messages[0]
 
       if (speech.fat.tor.text) {
         message["attachment"] = speech.fat.tor.text
@@ -311,12 +335,7 @@ export default class App extends React.Component {
       message["text"] = ' '
     }
 
-    if (item) {
-      item.messages.push(message)
-      items.push(item)
-    }
-
-    return items
+    return messages
   }
 
   async sendMessage() {
@@ -493,7 +512,7 @@ export default class App extends React.Component {
 
         <FlatList
           ref={(list) => this.listRef = list}
-          data={this.state.messages}
+          data={this.state.items}
           renderItem={this.renderItem.bind(this)}
           ListFooterComponent={this.listFooter.bind(this)}
           refreshing={this.state.refreshing}
@@ -537,21 +556,21 @@ export default class App extends React.Component {
     return audience.join(", ")
   }
 
-  getAvatarUrl(item) {
-    return 'https://robohash.org/~.~' + item.sender
+  getAvatarUrl(message) {
+    return 'https://robohash.org/~.~' + message.ship
   }
 
   renderItem({item}) {
-    var avatarUrl = this.getAvatarUrl(item)
-
-    var sender = this.urbit.formatShip(item.sender, true)
-    var audience = this.formatAudience(item.audience)
-    var time
-    if (new Date().toLocaleDateString() == new Date(item.ts).toLocaleDateString()) {
-      time = new Date(item.ts).toLocaleTimeString()
+    var firstMessage = item.messages[0]
+    var avatarUrl = this.getAvatarUrl(firstMessage)
+    var sender = this.urbit.formatShip(firstMessage.ship, true)
+    var audience = this.formatAudience(Object.keys(firstMessage.thought.audience))
+    var time = firstMessage.thought.statement.date
+    if (new Date().toLocaleDateString() == new Date(time).toLocaleDateString()) {
+      time = new Date(time).toLocaleTimeString()
 
     } else {
-      time = new Date(item.ts).toLocaleString();
+      time = new Date(time).toLocaleString();
     }
 
     var messages = []
@@ -577,6 +596,17 @@ export default class App extends React.Component {
   }
 
   renderItemMessage(message) {
+    var rendered = []
+    message.subMessages.forEach(m => rendered.push(this.renderItemSubMessage(m)))
+
+    return (
+      <View key={message.thought.serial}>
+        {rendered}
+      </View>
+    )
+  }
+
+  renderItemSubMessage(message) {
     var linkOrText
     if (message.type == 'url') {
       linkOrText = (
