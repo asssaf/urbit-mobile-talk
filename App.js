@@ -592,11 +592,15 @@ export default class App extends React.Component {
     );
   }
 
-  formatAudience(audience) {
+  formatAudience(audience, short) {
     if (audience == null) {
       return null
     }
-    return audience.join(", ")
+    var f = audience.join(", ")
+    if (short && f.length > 32) {
+      f = f.substring(0, 31) + ".."
+    }
+    return f
   }
 
   getAvatarUrl(message) {
@@ -607,7 +611,7 @@ export default class App extends React.Component {
     var firstMessage = item.messages[0]
     var avatarUrl = this.getAvatarUrl(firstMessage)
     var sender = this.urbit.formatShip(firstMessage.ship, true)
-    var audience = this.formatAudience(Object.keys(firstMessage.thought.audience))
+    var audience = this.formatAudience(Object.keys(firstMessage.thought.audience), true)
     var time = _formatTime(new Date(firstMessage.thought.statement.date))
 
     var messages = []
