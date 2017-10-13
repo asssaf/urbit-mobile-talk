@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity, Image, AsyncStorage, Alert, Linking } from 'react-native';
+    TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState } from 'react-native';
 import Autolink from 'react-native-autolink';
 import { Notifications } from 'expo';
 import Header from './Header';
@@ -30,6 +30,7 @@ export default class App extends React.Component {
     firstItem: -1,
     refreshing: false,
     audience: null,
+    appState: AppState.currentState,
   };
 
   urbit = new Urbit()
@@ -40,6 +41,20 @@ export default class App extends React.Component {
     this.loadState([ 'user', 'server' ])
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
+
+    AppState.addEventListener('change', this._handleAppStateChange)
+  }
+
+  componentWillUnmount() {
+    AppState.removeEventListener('change', this._handleAppStateChange)
+  }
+
+  _handleAppStateChange = (nextAppState) => {
+    if (this.state.appState !== 'active' && nextAppState === 'active') {
+      // application foregrounded - clear notifications
+      Expo.Notifications.dismissAllNotificationsAsync()
+    }
+    this.setState({ appState: nextAppState })
   }
 
   async checkLogin() {
