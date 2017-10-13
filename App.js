@@ -39,6 +39,13 @@ function _formatTime(date) {
   return f
 }
 
+function _truncate(s, limit) {
+  if (s && s.length > limit) {
+    s = s.substring(0, limit - 2) + ".."
+  }
+  return s
+}
+
 export default class App extends React.Component {
   state = {
     loggedIn: false,
@@ -381,6 +388,9 @@ export default class App extends React.Component {
       message["text"] = ' '
     }
 
+    message["text"] = _truncate(message["text"], 256)
+    message["attachment"] = _truncate(message["attachment"], 256)
+
     return messages
   }
 
@@ -600,8 +610,8 @@ export default class App extends React.Component {
       return null
     }
     var f = audience.join(", ")
-    if (short && f.length > 32) {
-      f = f.substring(0, 31) + ".."
+    if (short) {
+      f = _truncate(f, 32)
     }
     return f
   }
