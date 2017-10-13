@@ -221,7 +221,7 @@ export default class App extends React.Component {
 
 
         if (!isRefresh && this.state.firstItem != -1 && this.state.appState !== 'active') {
-          newItems.filter(item => { item.ship !== this.state.user }).forEach(item => {
+          newItems.filter(item => (item.ship !== this.state.user)).forEach(item => {
             item.messages.forEach(m => {
               var messages = this.processSpeech(m, m.thought.statement.speech)
               var title = "~" + this.urbit.formatShip(m.ship, true)
