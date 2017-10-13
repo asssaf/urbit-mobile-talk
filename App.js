@@ -69,7 +69,7 @@ export default class App extends React.Component {
   listRef = null
 
   async componentDidMount() {
-    this.loadState({ user: '', server: '' })
+    this.loadState({ user: '', server: '', audience: null })
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
 
@@ -419,8 +419,20 @@ export default class App extends React.Component {
 
     this.listRef.scrollToEnd()
     for (var i = 0; i < speeches.length; ++ i) {
-      await this.sendMessageSpeech(speeches[i])
+      var res = await this.sendMessageSpeech(speeches[i])
+
+      if (!res) {
+        Alert.alert('Send Error', 'An error occured while sending the message')
+        return
+      }
     }
+
+    // set the component state (clears text input)
+    this.setState({
+      typing: '',
+    });
+
+    this.saveState('audience', this.state.audience)
   }
 
   async sendMessageSpeech(speech) {
@@ -444,16 +456,11 @@ export default class App extends React.Component {
         }
     }
 
-    this.urbit.poke(this.session, 'talk', 'talk-command', '/', {
+    return this.urbit.poke(this.session, 'talk', 'talk-command', '/', {
       publish: [
         message
       ]
     })
-
-    // set the component state (clears text input)
-    this.setState({
-      typing: '',
-    });
   }
 
   buildSpeech(type, text, arg) {
