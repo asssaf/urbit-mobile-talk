@@ -69,7 +69,7 @@ export default class App extends React.Component {
   listRef = null
 
   async componentDidMount() {
-    this.loadState([ 'user', 'server' ])
+    this.loadState({ user: '', server: '' })
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
 
@@ -112,18 +112,18 @@ export default class App extends React.Component {
     }
   }
 
-  loadState(keys) {
+  loadState(map) {
     promises = []
-    keys.forEach(key => {
+    Object.keys(map).forEach(key => {
       promises.push(AsyncStorage.getItem('@urbit-mobile-talk:' + key)
-        .then(v => this.setState({ [key]: v || '' })))
+        .then(v => this.setState({ [key]: JSON.parse(v) || map[key] })))
     })
     return Promise.all(promises)
   }
 
   async saveState(key, value) {
     try {
-      await AsyncStorage.setItem('@urbit-mobile-talk:' + key, value);
+      await AsyncStorage.setItem('@urbit-mobile-talk:' + key, JSON.stringify(value));
     } catch (error) {
       console.log(error)
     }
