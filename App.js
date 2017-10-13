@@ -15,6 +15,30 @@ function _isUrl(s) {
   return s.match(re)
 }
 
+function _formatTime(date) {
+  var hours = date.getHours()
+  var minutes = date.getMinutes()
+
+  var f = date.getHours() + ':'
+  var f = ':'
+  if (minutes < 10) {
+    f += '0'
+  }
+  f += minutes
+
+  if (hours > 12) {
+    f = (hours-12) + f + ' PM'
+
+  } else {
+    if (hours == 0) {
+      hours = 12
+    }
+    f = hours + f + ' AM'
+  }
+
+  return f
+}
+
 export default class App extends React.Component {
   state = {
     loggedIn: false,
@@ -469,7 +493,7 @@ export default class App extends React.Component {
       return null
     }
 
-    var lastUpdatedAt = this.state.lastUpdate.toLocaleTimeString()
+    var lastUpdatedAt = _formatTime(this.state.lastUpdate)
 
     return (
       <View style={styles.listFooter}>
@@ -584,13 +608,7 @@ export default class App extends React.Component {
     var avatarUrl = this.getAvatarUrl(firstMessage)
     var sender = this.urbit.formatShip(firstMessage.ship, true)
     var audience = this.formatAudience(Object.keys(firstMessage.thought.audience))
-    var time = firstMessage.thought.statement.date
-    if (new Date().toLocaleDateString() == new Date(time).toLocaleDateString()) {
-      time = new Date(time).toLocaleTimeString()
-
-    } else {
-      time = new Date(time).toLocaleString();
-    }
+    var time = _formatTime(new Date(firstMessage.thought.statement.date))
 
     var messages = []
     for (var i = 0; i < item.messages.length; ++i) {
