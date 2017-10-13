@@ -205,50 +205,53 @@ export default class App extends React.Component {
       }
 
     } else if (data.grams) {
-      var newItems = []
-      data.grams.tele.forEach(t => {
-        t.subMessages = this.processSpeech(t, t.thought.statement.speech)
-        this.addMessage(newItems, t)
-      })
-
-
-      if (!isRefresh && this.state.firstItem != -1 && this.state.appState !== 'active') {
-        newItems.filter(item => { item.ship !== this.state.user }).forEach(item => {
-          item.messages.forEach(m => {
-            var messages = this.processSpeech(m, m.thought.statement.speech)
-            var title = "~" + this.urbit.formatShip(m.ship, true)
-            // merge sub messages for the item
-            var body = ""
-            messages.forEach(sub => body += sub["text"])
-            var iconUrl = this.getAvatarUrl(m)
-            this.presentNotification(title, body, iconUrl)
-          })
+      if (data.grams.tele.length > 0) {
+        var newItems = []
+        data.grams.tele.forEach(t => {
+          t.subMessages = this.processSpeech(t, t.thought.statement.speech)
+          this.addMessage(newItems, t)
         })
+
+
+        if (!isRefresh && this.state.firstItem != -1 && this.state.appState !== 'active') {
+          newItems.filter(item => { item.ship !== this.state.user }).forEach(item => {
+            item.messages.forEach(m => {
+              var messages = this.processSpeech(m, m.thought.statement.speech)
+              var title = "~" + this.urbit.formatShip(m.ship, true)
+              // merge sub messages for the item
+              var body = ""
+              messages.forEach(sub => body += sub["text"])
+              var iconUrl = this.getAvatarUrl(m)
+              this.presentNotification(title, body, iconUrl)
+            })
+          })
+        }
+
+        if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
+          this.setState({ firstItem: data.grams.num })
+        }
+
+        if (this.state.audience === null) {
+          var lastItem = newItems[newItems.length - 1]
+          var audience = Object.keys(lastItem.messages[0].thought.audience)
+          this.setState({ audience: audience })
+        }
+
+        var updatedItems
+        if (isRefresh) {
+          updatedItems = newItems.concat(this.state.items.slice())
+
+          var path = wire.substring('/refresh'.length)
+          this.urbit.unsubscribe(this.session, this.state.user, wire, 'talk', path)
+
+        } else {
+          // concatenate with possible merge of middle item
+          updatedItems = this.concatItems(this.state.items.slice(), newItems)
+        }
+
+        this.setState({ items: updatedItems })
       }
 
-      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
-        this.setState({ firstItem: data.grams.num })
-      }
-
-      if (this.state.audience === null) {
-        var lastItem = newItems[newItems.length - 1]
-        var audience = Object.keys(lastItem.messages[0].thought.audience)
-        this.setState({ audience: audience })
-      }
-
-      var updatedItems
-      if (isRefresh) {
-        updatedItems = newItems.concat(this.state.items.slice())
-
-        var path = wire.substring('/refresh'.length)
-        this.urbit.unsubscribe(this.session, this.state.user, wire, 'talk', path)
-
-      } else {
-        // concatenate with possible merge of middle item
-        updatedItems = this.concatItems(this.state.items.slice(), newItems)
-      }
-
-      this.setState({ items: updatedItems })
       if (isRefresh) {
         this.setState({ refreshing: false })
 
