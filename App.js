@@ -47,6 +47,9 @@ export default class App extends React.Component {
 
   componentWillUnmount() {
     AppState.removeEventListener('change', this._handleAppStateChange)
+    if (this.state.inChannel === true) {
+      this.doLeave()
+    }
   }
 
   _handleAppStateChange = (nextAppState) => {
@@ -296,7 +299,7 @@ export default class App extends React.Component {
     var type = Object.keys(speech)[0]
 
     var message = {
-      key: m.thought.serial,
+      key: serial || m.thought.serial,
       date: m.thought.statement.date,
       sender: m.ship,
       audience: m.thought.audience,
@@ -322,6 +325,7 @@ export default class App extends React.Component {
     } else if (type == 'mor') {
       var subItems = speech.mor
       var i
+      messages = []
       for (i = 0; i < subItems.length; ++i) {
         messages = messages.concat(this.processSpeech(m, subItems[i], serial + "/" + i))
       }
