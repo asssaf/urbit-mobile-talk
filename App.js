@@ -1,11 +1,25 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { StackNavigator, NavigationActions } from 'react-navigation';
 import Login from './Login';
 import Loading from './Loading';
 import Chat from './Chat';
+import ViewMessage from './ViewMessage'
 import Urbit from './Urbit';
 import { loadState, saveState } from './persistence'
 
+const ChatNavigator = StackNavigator({
+  Chat: {
+    screen: Chat,
+  },
+  ViewMessage: {
+    screen: ViewMessage,
+  }
+}, {
+  initialRouteParams: {
+    title: ''
+  }
+})
 
 export default class App extends React.Component {
   state = {
@@ -63,13 +77,6 @@ export default class App extends React.Component {
     this.setState({ loading: false })
   }
 
-  confirmLogout() {
-    Alert.alert('Logout', 'Are you sure you want to log out?', [
-      { text: 'Ok', onPress: () => this.doLogout() },
-      { text: 'Cancel' },
-    ])
-  }
-
   async doLogout() {
     var res = await this.urbit.deleteSession(this.state.session)
     if (!res) {
@@ -77,21 +84,6 @@ export default class App extends React.Component {
     }
 
     this.setState({ loggedIn: false, loggedOut: true })
-  }
-
-  openSettings() {
-    this.confirmReload()
-  }
-
-  confirmReload() {
-    Alert.alert('Reload', 'Are you sure you want to reload the app?', [
-      { text: 'Ok', onPress: () => this.doReload() },
-      { text: 'Cancel' },
-    ])
-  }
-
-  doReload() {
-    Expo.Util.reload()
   }
 
   render() {
@@ -115,13 +107,27 @@ export default class App extends React.Component {
       );
     }
 
+    var screenProps = {
+      session: this.state.session,
+      onLogout: this.doLogout.bind(this),
+    }
+
     return (
-      <Chat
-        user={this.state.user}
-        session={this.state.session}
-        onBackPress={this.confirmLogout.bind(this)}
-        onSettingsPress={this.openSettings.bind(this)}
-      />
-    );
+      <View style={styles.container}>
+        <View style={styles.header} />
+        <ChatNavigator screenProps={screenProps} />
+      </View>
+    )
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    height: Expo.Constants.statusBarHeight,
+    backgroundColor: 'lightseagreen',
+  },
+});

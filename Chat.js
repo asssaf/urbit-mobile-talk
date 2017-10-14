@@ -2,16 +2,12 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState } from 'react-native';
 import Autolink from 'react-native-autolink';
-import Header from './Header';
+import Item from './Item'
+import Message from './Message';
+import ToolBar from './ToolBar'
 import Urbit from './Urbit';
 import { loadState, saveState } from './persistence'
-
-function _truncate(s, limit) {
-  if (s && s.length > limit) {
-    s = s.substring(0, limit - 2) + ".."
-  }
-  return s
-}
+import { formatTime, formatAudience, getAvatarUrl, truncate } from './formatting'
 
 function _isUrl(s) {
   var pattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
@@ -19,47 +15,36 @@ function _isUrl(s) {
   return s.match(re)
 }
 
-function _formatTime(date) {
-  var hours = date.getHours()
-  var minutes = date.getMinutes()
-
-  var f = date.getHours() + ':'
-  var f = ':'
-  if (minutes < 10) {
-    f += '0'
-  }
-  f += minutes
-
-  if (hours > 12) {
-    f = (hours-12) + f + ' PM'
-
-  } else {
-    if (hours == 0) {
-      hours = 12
-    }
-    f = hours + f + ' AM'
-  }
-
-  return f
-}
-
 export default class Chat extends React.Component {
+  static navigationOptions = ({ navigation }) => ({
+    title: `${navigation.state.params.title}`,
+    headerRight: <ToolBar onLogout={navigation.state.params.onLogout}/>,
+  })
+
   state = {
+    user: this.props.screenProps.session.user,
+    session: this.props.screenProps.session,
     typing: '',
     audience: null,
     items: [],
     inChannel: false,
     refreshing: false,
     firstItem: -1,
+    lastUpdate: null,
     appState: AppState.currentState,
   }
 
   urbit = new Urbit();
 
   componentDidMount() {
+    this.props.navigation.setParams({
+      title: '~' + this.urbit.formatShip(this.state.user, true),
+      onLogout: this.props.screenProps.onLogout,
+    })
+
+    AppState.addEventListener('change', this._handleAppStateChange)
     loadState.bind(this)({ audience: null })
     this.doJoin()
-    AppState.addEventListener('change', this._handleAppStateChange)
   }
 
   componentWillUnmount() {
@@ -79,20 +64,20 @@ export default class Chat extends React.Component {
 
   async doJoin() {
     var wire = "/messages"
-    var path = "/f/" + this.urbit.getPorch(this.props.user)
-    var res = await this.urbit.subscribe(this.props.session, this.props.user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
+    var path = "/f/" + this.urbit.getPorch(this.state.user)
+    var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
 
     if (res) {
       this.setState({ inChannel: true })
 
     } else {
-      console.log("Failed to load from " + this.urbit.getPorch(this.props.user))
+      console.log("Failed to load from " + this.urbit.getPorch(this.state.user))
     }
   }
 
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.props.session, this.props.user, '/messages',
-        'talk', '/f/' + this.urbit.getPorch(this.props.user))
+    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages',
+        'talk', '/f/' + this.urbit.getPorch(this.state.user))
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -132,7 +117,7 @@ export default class Chat extends React.Component {
 
 
         if (!isRefresh && this.state.firstItem != -1 && this.state.appState !== 'active') {
-          newItems.filter(item => (item.ship !== this.props.user)).forEach(item => {
+          newItems.filter(item => (item.ship !== this.state.user)).forEach(item => {
             item.messages.forEach(m => {
               var messages = this.processSpeech(m, m.thought.statement.speech)
               var title = "~" + this.urbit.formatShip(m.ship, true)
@@ -160,7 +145,7 @@ export default class Chat extends React.Component {
           updatedItems = newItems.concat(this.state.items.slice())
 
           var path = wire.substring('/refresh'.length)
-          this.urbit.unsubscribe(this.props.session, this.props.user, wire, 'talk', path)
+          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'talk', path)
 
         } else {
           // concatenate with possible merge of middle item
@@ -299,8 +284,8 @@ export default class Chat extends React.Component {
       message["text"] = ' '
     }
 
-    message["text"] = _truncate(message["text"], 256)
-    message["attachment"] = _truncate(message["attachment"], 256)
+    message["text"] = truncate(message["text"], 256)
+    message["attachment"] = truncate(message["attachment"], 256)
 
     return messages
   }
@@ -369,7 +354,7 @@ export default class Chat extends React.Component {
         }
     }
 
-    return this.urbit.poke(this.props.session, 'talk', 'talk-command', '/', {
+    return this.urbit.poke(this.state.session, 'talk', 'talk-command', '/', {
       publish: [
         message
       ]
@@ -426,11 +411,11 @@ export default class Chat extends React.Component {
     var maxFetchItems = 32
     var end = this.state.firstItem + 1
     var start = Math.max(0, end - maxFetchItems)
-    var path = '/f/' + this.urbit.getPorch(this.props.user)
+    var path = '/f/' + this.urbit.getPorch(this.state.user)
         + '/' + this.urbit.formatNumber(start)
         + '/' + this.urbit.formatNumber(end)
 
-    var res = await this.urbit.subscribe(this.props.session, this.props.user,
+    var res = await this.urbit.subscribe(this.state.session, this.state.user,
         '/refresh' + path, 'talk', path, this.handleMessages.bind(this))
 
     if (!res) {
@@ -439,12 +424,16 @@ export default class Chat extends React.Component {
     }
   }
 
+  handleMessagePress(message) {
+    this.props.navigation.navigate('ViewMessage', { message: message })
+  }
+
   listFooter() {
-    if (this.props.lastUpdate == null) {
+    if (this.state.lastUpdate == null) {
       return null
     }
 
-    var lastUpdatedAt = _formatTime(this.props.lastUpdate)
+    var lastUpdatedAt = formatTime(this.state.lastUpdate)
 
     return (
       <View style={styles.listFooter}>
@@ -456,12 +445,6 @@ export default class Chat extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Header
-          title={'~' + this.urbit.formatShip(this.props.user, true)}
-          onLeftButtonPress={this.props.onBackPress}
-          onRightButtonPress={this.props.onSettingsPress}
-        />
-
         <FlatList
           ref={(list) => this.listRef = list}
           data={this.state.items}
@@ -471,11 +454,11 @@ export default class Chat extends React.Component {
           onRefresh={this.refresh.bind(this)}
         />
 
-        <KeyboardAvoidingView behavior="padding">
+        <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={80}>
           <View style={styles.footer}>
             <View style={styles.footerAudience}>
               <TextInput
-                value={this.formatAudience(this.state.audience)}
+                value={formatAudience(this.state.audience)}
                 onChangeText={text => this.setState({ audience: text.split(/,\s*/) })}
                 style={styles.input}
                 underlineColorAndroid="transparent"
@@ -501,84 +484,10 @@ export default class Chat extends React.Component {
     )
   }
 
-  formatAudience(audience, short) {
-    if (audience == null) {
-      return null
-    }
-    var f = audience.join(", ")
-    if (short) {
-      f = _truncate(f, 32)
-    }
-    return f
-  }
-
-  getAvatarUrl(message) {
-    return 'https://robohash.org/~.~' + message.ship
-  }
-
   renderItem({item}) {
-    var firstMessage = item.messages[0]
-    var avatarUrl = this.getAvatarUrl(firstMessage)
-    var sender = this.urbit.formatShip(firstMessage.ship, true)
-    var audience = this.formatAudience(Object.keys(firstMessage.thought.audience), true)
-    var time = _formatTime(new Date(firstMessage.thought.statement.date))
-
-    var messages = []
-    for (var i = 0; i < item.messages.length; ++i) {
-      messages.push(this.renderItemMessage(item.messages[i]))
-    }
-
     return (
-      <View style={styles.row}>
-        <Image style={styles.avatar} source={{uri: avatarUrl}} />
-        <View style={styles.rowText}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.sender}>~{sender}</Text>
-            <Text style={styles.timestamp}>{time}</Text>
-            <Text style={styles.audience}>{audience}</Text>
-          </View>
-          <View>
-            {messages}
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  renderItemMessage(message) {
-    var rendered = []
-    message.subMessages.forEach(m => rendered.push(this.renderItemSubMessage(m)))
-
-    return (
-      <View key={message.thought.serial}>
-        {rendered}
-      </View>
-    )
-  }
-
-  renderItemSubMessage(message) {
-    var linkOrText
-    if (message.type == 'url') {
-      linkOrText = (
-        <TouchableOpacity onPress={() => Linking.openURL(message.text)}>
-          <Text style={styles.messageUrl}>{message.text}</Text>
-        </TouchableOpacity>
-      )
-
-    } else {
-      linkOrText = (
-        <Autolink style={message.style} text={message.text} />
-      )
-    }
-
-    return (
-      <View key={message['key']}>
-        {linkOrText}
-        {message.attachment &&
-          <View style={styles.attachment}>
-            <Text>{message.attachment}</Text>
-          </View>
-        }
+      <View style={styles.row} key={item.messages[0].thought.serial}>
+        <Item messages={item.messages} onMessagePress={this.handleMessagePress.bind(this)} />
       </View>
     )
   }
@@ -590,10 +499,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   row: {
-    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    flexDirection: 'row'
   },
   listFooter: {
     padding: 10,
@@ -606,9 +513,6 @@ const styles = StyleSheet.create({
   lastUpdated: {
     fontSize: 14,
     color: 'lightgray',
-  },
-  itemHeader: {
-    flexDirection: 'row'
   },
   message: {
     fontSize: 16,
@@ -624,26 +528,6 @@ const styles = StyleSheet.create({
   messageUrl: {
     fontSize: 16,
     color: '#0E7AFE',
-  },
-  attachment: {
-    borderColor: 'black',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  sender: {
-    fontWeight: 'bold',
-    paddingRight: 10,
-  },
-  timestamp: {
-    paddingRight: 10,
-    color: 'gray',
-  },
-  audience: {
-    paddingRight: 10,
-    color: 'gray',
   },
   footer: {
     flexDirection: 'column',
