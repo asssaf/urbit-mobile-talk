@@ -79,6 +79,21 @@ export default class App extends React.Component {
     this.setState({ loggedIn: false, loggedOut: true })
   }
 
+  openSettings() {
+    this.confirmReload()
+  }
+
+  confirmReload() {
+    Alert.alert('Reload', 'Are you sure you want to reload the app?', [
+      { text: 'Ok', onPress: () => this.doReload() },
+      { text: 'Cancel' },
+    ])
+  }
+
+  doReload() {
+    Expo.Util.reload()
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -105,6 +120,7 @@ export default class App extends React.Component {
         user={this.state.user}
         session={this.state.session}
         onBackPress={this.confirmLogout.bind(this)}
+        onSettingsPress={this.openSettings.bind(this)}
       />
     );
   }

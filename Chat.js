@@ -459,6 +459,7 @@ export default class Chat extends React.Component {
         <Header
           title={'~' + this.urbit.formatShip(this.props.user, true)}
           onLeftButtonPress={this.props.onBackPress}
+          onRightButtonPress={this.props.onSettingsPress}
         />
 
         <FlatList

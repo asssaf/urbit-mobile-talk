@@ -11,14 +11,21 @@ export default class Header extends React.Component {
           <TouchableOpacity disabled={!this.props.onLeftButtonPress} onPress={this.props.onLeftButtonPress}>
             <View style={styles.leftButton}>
               {this.props.onLeftButtonPress &&
-                <FontAwesome name="angle-left" size={32} color="white" />
+                <FontAwesome name="chevron-left" size={24} color="white" />
               }
             </View>
           </TouchableOpacity>
           <Text style={styles.title}>
             {this.props.title}
           </Text>
-          <Text style={styles.rightButton}></Text>
+
+          <TouchableOpacity disabled={!this.props.onRightButtonPress} onPress={this.props.onRightButtonPress}>
+            <View style={styles.rightButton}>
+              {this.props.onRightButtonPress &&
+                <FontAwesome name="ellipsis-v" size={24} color="white" />
+              }
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     )
@@ -27,10 +34,11 @@ export default class Header extends React.Component {
 
 const styles = StyleSheet.create({
   header: {
-    height: 76,
+    padding: 10,
+    paddingTop: Expo.Constants.statusBarHeight,
+    height: 50 + Expo.Constants.statusBarHeight,
     backgroundColor: 'lightseagreen',
     justifyContent: 'flex-end',
-    padding: 10,
   },
   title: {
     color: 'white',
@@ -42,9 +50,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   leftButton: {
-    width: 32
+    width: 48,
+    marginTop: 5,
   },
   rightButton: {
-    width: 32
+    width: 48,
+    marginTop: 5,
+    alignItems: 'flex-end',
   },
 });
