@@ -59,6 +59,10 @@ export default class Chat extends React.Component {
     this.setState({ appState: nextAppState })
   }
 
+  _handleSessionBeat = () => {
+    this.setState({ lastUpdate: new Date() })
+  }
+
   async doJoin() {
     var wire = "/messages"
     var path = "/f/" + this.urbit.getPorch(this.state.user)
@@ -66,6 +70,7 @@ export default class Chat extends React.Component {
 
     if (res) {
       this.setState({ inChannel: true })
+      this.state.session.beatListeners[0] = this._handleSessionBeat
 
     } else {
       console.log("Failed to load from " + this.urbit.getPorch(this.state.user))
@@ -159,10 +164,6 @@ export default class Chat extends React.Component {
         this.setState({ loading: false })
       }
     }
-  }
-
-  handlePoll() {
-    this.setState({ lastUpdate: new Date() })
   }
 
   /**
@@ -472,6 +473,7 @@ export default class Chat extends React.Component {
         />
       )
     }
+
     return (
       <View style={styles.container}>
         <FlatList

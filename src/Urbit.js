@@ -28,6 +28,8 @@ export default class Urbit {
         ixor: responseJson.ixor,
         event: -1,
         subscriptions: {},
+        lastUpdate: new Date(),
+        beatListeners: [],
       }
 
       return session;
@@ -111,6 +113,8 @@ export default class Urbit {
       session.authenticated = true
       session.oryx = responseJson.oryx
       session.ixor = responseJson.ixor
+      session.lastUpdate = new Date()
+
       console.log("Authenticated successfully")
       return true
 
@@ -147,7 +151,7 @@ export default class Urbit {
     }
   }
 
-  async subscribe(session, ship, wire, app, path, callback, pollback) {
+  async subscribe(session, ship, wire, app, path, callback) {
     try {
       if (session.subscriptions[wire]) {
         console.log("Already subscribed to wire: " + wire)
@@ -186,7 +190,7 @@ export default class Urbit {
       session.subscriptions[wire] = callback
       if (session.event == -1) {
         session.event = 1;
-        this.poll(session, pollback);
+        this.poll(session);
       }
       return true
 
@@ -239,7 +243,7 @@ export default class Urbit {
     }
   }
 
-  async poll(session, pollback) {
+  async poll(session) {
     while (true) {
       try {
         var url = session.server + "/~/of/" + session.ixor + "?poll=" + session.event
@@ -256,9 +260,8 @@ export default class Urbit {
           continue
         }
 
-        if (pollback) {
-          pollback()
-        }
+        session.lastUpdate = new Date()
+        session.beatListeners.forEach(listener => listener())
 
         var responseJson = await response.json()
         if (!responseJson.beat) {
