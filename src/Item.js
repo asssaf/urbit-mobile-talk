@@ -57,7 +57,10 @@ export default class Item extends React.Component {
 
   renderItemMessage(message) {
     return (
-      <TouchableOpacity key={message.thought.serial} onPress={() => this.props.onMessagePress(message)}>
+      <TouchableOpacity
+          key={message.thought.serial}
+          disabled={this.props.expanded === true}
+          onPress={() => this.props.onMessagePress(message)}>
         <Message message={message} expanded={this.props.expanded} />
       </TouchableOpacity>
     )
