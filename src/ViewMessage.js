@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, ScrollView, StyleSheet} from 'react-native';
 import Item from './Item';
 
 export default class ViewMessage extends React.Component {
@@ -9,7 +9,9 @@ export default class ViewMessage extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Item expanded={true} messages={[this.props.navigation.state.params.message]} />
+        <ScrollView>
+          <Item expanded={true} messages={[this.props.navigation.state.params.message]} />
+        </ScrollView>
       </View>
     )
   }
