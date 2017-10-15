@@ -4,10 +4,11 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
 import Autolink from 'react-native-autolink';
 import Item from './Item'
 import Message from './Message';
-import ToolBar from './ToolBar'
+import ToolBar from './ToolBar';
+import Loading from './Loading';
 import Urbit from './Urbit';
-import { loadState, saveState } from './persistence'
-import { formatTime, formatAudience, getAvatarUrl } from './formatting'
+import { loadState, saveState } from './persistence';
+import { formatTime, formatAudience, getAvatarUrl } from './formatting';
 
 function _isUrl(s) {
   var pattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
@@ -456,6 +457,13 @@ export default class Chat extends React.Component {
   }
 
   render() {
+    if (this.state.firstItem == -1) {
+      return (
+        <Loading
+          statusMessage='Loading messages...'
+        />
+      )
+    }
     return (
       <View style={styles.container}>
         <FlatList

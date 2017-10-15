@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StackNavigator, NavigationActions } from 'react-navigation';
 import Login from './Login';
-import Loading from './Loading';
+import LoadingScreen from './LoadingScreen';
 import Chat from './Chat';
 import ViewMessage from './ViewMessage'
 import Urbit from './Urbit';
@@ -10,7 +10,7 @@ import { loadState, saveState } from './persistence'
 
 const ChatNavigator = StackNavigator({
   Loading: {
-    screen: Loading,
+    screen: LoadingScreen,
   },
   Login: {
     screen: Login,
