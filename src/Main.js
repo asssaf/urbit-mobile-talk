@@ -18,7 +18,11 @@ const ChatNavigator = StackNavigator({
 }, {
   initialRouteParams: {
     title: ''
-  }
+  },
+  navigationOptions: {
+    headerTintColor: 'white',
+    headerStyle: { backgroundColor: 'lightseagreen' },
+  },
 })
 
 export default class Main extends React.Component {
