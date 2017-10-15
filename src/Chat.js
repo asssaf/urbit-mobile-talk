@@ -32,6 +32,7 @@ export default class Chat extends React.Component {
     firstItem: -1,
     lastUpdate: null,
     appState: AppState.currentState,
+    submitted: false,
   }
 
   urbit = new Urbit();
@@ -291,6 +292,7 @@ export default class Chat extends React.Component {
   }
 
   async sendMessage() {
+    this.setState({ submitted: true })
     var text = this.state.typing
     var speeches = []
     if (_isUrl(text)) {
@@ -321,12 +323,14 @@ export default class Chat extends React.Component {
 
       if (!res) {
         Alert.alert('Send Error', 'An error occured while sending the message')
+        this.setState({ submitted: false })
         return
       }
     }
 
     // set the component state (clears text input)
     this.setState({
+      submitted: false,
       typing: '',
     });
 
@@ -428,6 +432,20 @@ export default class Chat extends React.Component {
     this.props.navigation.navigate('ViewMessage', { message: message })
   }
 
+  isSendDisabled() {
+    if (this.state.audience == null
+        || this.state.audience.length == 0
+        || this.state.audience[0].length == 0) {
+      return true
+    }
+
+    if (this.state.typing.length == 0) {
+      return true
+    }
+
+    return false
+  }
+
   listFooter() {
     if (this.state.lastUpdate == null) {
       return null
@@ -474,8 +492,8 @@ export default class Chat extends React.Component {
                 placeholder="Type something nice"
               />
 
-              <TouchableOpacity onPress={this.sendMessage.bind(this)}>
-                <Text style={styles.send}>Send</Text>
+              <TouchableOpacity disabled={this.isSendDisabled()} onPress={this.sendMessage.bind(this)}>
+                <Text style={this.isSendDisabled() ? styles.sendDisabled : styles.send}>Send</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -550,6 +568,13 @@ const styles = StyleSheet.create({
   send: {
     alignSelf: 'center',
     color: 'lightseagreen',
+    fontSize: 16,
+    fontWeight: 'bold',
+    padding: 20,
+  },
+  sendDisabled: {
+    alignSelf: 'center',
+    color: 'grey',
     fontSize: 16,
     fontWeight: 'bold',
     padding: 20,
