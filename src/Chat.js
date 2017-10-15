@@ -456,6 +456,14 @@ export default class Chat extends React.Component {
     );
   }
 
+  emptyList() {
+    return (
+      <View style={styles.listFooter}>
+        <Text>No messages to show</Text>
+      </View>
+    )
+  }
+
   render() {
     if (this.state.firstItem == -1) {
       return (
@@ -471,6 +479,7 @@ export default class Chat extends React.Component {
           data={this.state.items}
           renderItem={this.renderItem.bind(this)}
           ListFooterComponent={this.listFooter.bind(this)}
+          ListEmptyComponent={this.emptyList.bind(this)}
           refreshing={this.state.refreshing}
           onRefresh={this.refresh.bind(this)}
         />
