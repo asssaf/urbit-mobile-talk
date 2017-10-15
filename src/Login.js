@@ -1,26 +1,31 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
-import Header from './Header';
 import Urbit from './Urbit';
 
 export default class Login extends React.Component {
+  static navigationOptions = {
+    title: 'Login to your Urbit'
+  }
+
   state = {
     formError: "",
     formStatusStyle: styles.formLabel,
-    user: this.props.user,
+    user: this.props.navigation.state.params.user,
     code: "",
     submitted: false,
-    customServer: this.props.server.length > 0,
-    server: this.props.server,
+    customServer: this.props.navigation.state.params.server.length > 0,
+    server: this.props.navigation.state.params.server,
   }
 
   urbit = new Urbit()
 
   componentDidMount() {
+    console.log("login mount")
     this.setState({ formError: "", submitted: false })
   }
 
   async doLogin() {
+    console.log("doLogin")
     this.setState({
       submitted: true,
       formError: "Connecting...",
@@ -47,7 +52,7 @@ export default class Login extends React.Component {
     var result = await this.urbit.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
-      this.props.onLogin(session, this.state.user, this.state.customServer ? this.state.server : '')
+      this.props.screenProps.onLogin(session, this.state.user, this.state.customServer ? this.state.server : '')
 
     } else {
       this.setState({
@@ -81,8 +86,6 @@ export default class Login extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Header title="Login to your Urbit" />
-
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>User</Text>
           <TextInput

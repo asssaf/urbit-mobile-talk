@@ -9,6 +9,12 @@ import Urbit from './Urbit';
 import { loadState, saveState } from './persistence'
 
 const ChatNavigator = StackNavigator({
+  Loading: {
+    screen: Loading,
+  },
+  Login: {
+    screen: Login,
+  },
   Chat: {
     screen: Chat,
   },
@@ -17,7 +23,7 @@ const ChatNavigator = StackNavigator({
   }
 }, {
   initialRouteParams: {
-    title: ''
+    statusMessage: 'Loading...',
   },
   navigationOptions: {
     headerTintColor: 'white',
@@ -27,13 +33,9 @@ const ChatNavigator = StackNavigator({
 
 export default class Main extends React.Component {
   state = {
-    loggedIn: false,
-    loggedOut: false,
-    loading: true,
-    loadingStatus: "Loading...",
     user: "",
     server: "",
-    session: null,
+    session: { user: '', server: ''},
   };
 
   urbit = new Urbit()
@@ -47,13 +49,53 @@ export default class Main extends React.Component {
   componentWillUnmount() {
   }
 
+  switchToLogin() {
+    var action = NavigationActions.reset({
+      index: 0,
+      actions: [
+        NavigationActions.navigate({
+          routeName: 'Login',
+          params: {
+            user: this.state.user,
+            server: this.state.server,
+          },
+        })
+      ]
+    })
+    this.navigator.dispatch(action)
+  }
+
+  switchToChat() {
+    var action = NavigationActions.reset({
+      index: 0,
+      actions: [
+        NavigationActions.navigate({
+          routeName: 'Chat',
+          params: {
+            title: '~' + this.urbit.formatShip(this.state.user, true),
+            onLogout: this.doLogout.bind(this),
+          },
+        })
+      ]
+    })
+    this.navigator.dispatch(action)
+  }
+
+  setRouteKey(key) {
+    this.setState({ routeKey: key })
+  }
+
   async checkLogin() {
     if (this.state.user == "") {
-      this.setState({ loading: false })
+      this.switchToLogin()
       return
     }
 
-    this.setState({ loadingStatus: "Logging in..." })
+    this.navigator.dispatch(NavigationActions.setParams({
+      key: this.state.routeKey,
+      params: { statusMessage: 'Logging in...' }
+    }))
+
     var server
     if (this.state.server.length > 0) {
       server = this.state.server
@@ -65,11 +107,16 @@ export default class Main extends React.Component {
     this.setState({ loading: false })
     if (session && session.authenticated) {
       this.handleLogin(session, this.state.user, this.state.server)
+
+    } else {
+      this.switchToLogin()
     }
   }
 
   async handleLogin(session, user, server) {
-    this.setState({ user: user, server: server, loggedIn: true, session: session })
+    this.setState({ user: user, server: server, session: session })
+
+    this.switchToChat()
 
     // store the user for next time
     saveState('user', user)
@@ -78,7 +125,7 @@ export default class Main extends React.Component {
 
   handleLoadingCancel() {
     //TODO cancel request in progress
-    this.setState({ loading: false })
+    this.switchToLogin()
   }
 
   async doLogout() {
@@ -87,39 +134,23 @@ export default class Main extends React.Component {
       console.log("Failed to logout")
     }
 
-    this.setState({ loggedIn: false, loggedOut: true })
+    // switch anyway (even if logout failed)
+    this.switchToLogin()
   }
 
   render() {
-    if (this.state.loading) {
-      return (
-        <Loading
-          statusMessage={this.state.loadingStatus}
-          onCancel={this.handleLoadingCancel.bind(this)}
-        />
-      );
-    }
-
-    if (!this.state.loggedIn) {
-      return (
-        <Login
-          user={this.state.user}
-          server={this.state.server}
-          onLogin={this.handleLogin.bind(this)}
-          loggedOut={this.loggedOut}
-        />
-      );
-    }
-
     var screenProps = {
       session: this.state.session,
+      onLoadingCancel: this.handleLoadingCancel.bind(this),
       onLogout: this.doLogout.bind(this),
+      onLogin: this.handleLogin.bind(this),
+      setRouteKey: this.setRouteKey.bind(this),
     }
 
     return (
       <View style={styles.container}>
         <View style={styles.header} />
-        <ChatNavigator screenProps={screenProps} />
+        <ChatNavigator screenProps={screenProps} ref={(nav) => {this.navigator = nav; } } />
       </View>
     )
   }

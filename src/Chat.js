@@ -38,11 +38,6 @@ export default class Chat extends React.Component {
   urbit = new Urbit();
 
   componentDidMount() {
-    this.props.navigation.setParams({
-      title: '~' + this.urbit.formatShip(this.state.user, true),
-      onLogout: this.props.screenProps.onLogout,
-    })
-
     AppState.addEventListener('change', this._handleAppStateChange)
     loadState.bind(this)({ audience: null })
     this.doJoin()
