@@ -7,7 +7,7 @@ import Message from './Message';
 import ToolBar from './ToolBar'
 import Urbit from './Urbit';
 import { loadState, saveState } from './persistence'
-import { formatTime, formatAudience, getAvatarUrl, truncate } from './formatting'
+import { formatTime, formatAudience, getAvatarUrl } from './formatting'
 
 function _isUrl(s) {
   var pattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
@@ -247,6 +247,9 @@ export default class Chat extends React.Component {
 
       } else if (type == 'exp') {
         message["style"] = styles.messageCode
+
+      } else if (type == 'url') {
+        message["style"] = styles.messageUrl
       }
 
     } else if (type == 'app') {
@@ -283,9 +286,6 @@ export default class Chat extends React.Component {
     if (!message["text"]) {
       message["text"] = ' '
     }
-
-    message["text"] = truncate(message["text"], 256)
-    message["attachment"] = truncate(message["attachment"], 256)
 
     return messages
   }
@@ -433,7 +433,7 @@ export default class Chat extends React.Component {
       return null
     }
 
-    var lastUpdatedAt = formatTime(this.state.lastUpdate)
+    var lastUpdatedAt = formatTime(this.state.lastUpdate, true)
 
     return (
       <View style={styles.listFooter}>

@@ -9,7 +9,7 @@ export default class ViewMessage extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Item messages={[this.props.navigation.state.params.message]} />
+        <Item expanded={true} messages={[this.props.navigation.state.params.message]} />
       </View>
     )
   }

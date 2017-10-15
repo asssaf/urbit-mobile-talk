@@ -12,35 +12,45 @@ export default class Item extends React.Component {
     return this.renderItem(this.props.messages)
   }
 
-  handleMessagePress(m) {
-
-  }
-
   renderItem(messages) {
     var firstMessage = messages[0]
     var avatarUrl = getAvatarUrl(firstMessage)
-    var sender = this.urbit.formatShip(firstMessage.ship, true)
-    var audience = formatAudience(Object.keys(firstMessage.thought.audience), true)
-    var time = formatTime(new Date(firstMessage.thought.statement.date))
+    var sender = this.urbit.formatShip(firstMessage.ship, this.props.expanded !== true)
+    var audience = formatAudience(Object.keys(firstMessage.thought.audience), this.props.expanded !== true)
+    var time = formatTime(new Date(firstMessage.thought.statement.date), this.props.expanded !== true)
 
     var renderedMessages = []
     for (var i = 0; i < messages.length; ++i) {
       renderedMessages.push(this.renderItemMessage(messages[i]))
     }
 
+    var headerStyle = styles.itemHeaderDetails
+    if (this.props.expanded === true) {
+      headerStyle = styles.itemHeaderDetailsExpanded
+    }
+
     return (
       <View style={styles.item}>
-        <Image style={styles.avatar} source={{uri: avatarUrl}} />
-        <View style={styles.rowText}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.sender}>~{sender}</Text>
-            <Text style={styles.timestamp}>{time}</Text>
-            <Text style={styles.audience}>{audience}</Text>
+        <View style={styles.itemHeader}>
+          <Image style={styles.avatar} source={{uri: avatarUrl}} />
+          <View style={styles.rowText}>
+            <View style={headerStyle}>
+              <Text style={styles.sender}>~{sender}</Text>
+              <Text style={styles.timestamp}>{time}</Text>
+              <Text style={styles.audience}>{audience}</Text>
+            </View>
+            {this.props.expanded !== true &&
+              <View>
+                {renderedMessages}
+              </View>
+            }
           </View>
+        </View>
+        {this.props.expanded === true &&
           <View>
             {renderedMessages}
           </View>
-        </View>
+        }
       </View>
     );
   }
@@ -48,7 +58,7 @@ export default class Item extends React.Component {
   renderItemMessage(message) {
     return (
       <TouchableOpacity key={message.thought.serial} onPress={() => this.props.onMessagePress(message)}>
-        <Message message={message} />
+        <Message message={message} expanded={this.props.expanded} />
       </TouchableOpacity>
     )
   }
@@ -57,10 +67,15 @@ export default class Item extends React.Component {
 const styles = StyleSheet.create({
   item: {
     padding: 20,
-    flexDirection: 'row'
   },
   itemHeader: {
+    flexDirection: 'row',
+  },
+  itemHeaderDetails: {
     flexDirection: 'row'
+  },
+  itemHeaderDetailsExpanded: {
+    flexDirection: 'column'
   },
   sender: {
     fontWeight: 'bold',

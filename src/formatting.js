@@ -1,5 +1,8 @@
 
-export function formatTime(date) {
+export function formatTime(date, short) {
+  if (!short) {
+    return date.toLocaleString()
+  }
   var hours = date.getHours()
   var minutes = date.getMinutes()
 

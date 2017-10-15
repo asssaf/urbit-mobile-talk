@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Linking } from 'react-native';
+import { StyleSheet, Text, View, Linking, TouchableOpacity } from 'react-native';
 import Autolink from 'react-native-autolink';
+import { truncate } from './formatting'
 
 export default class Message extends React.Component {
   render() {
@@ -20,25 +21,32 @@ export default class Message extends React.Component {
 
   renderItemSubMessage(message) {
     var linkOrText
+    var text = message.text
+    var attachment = message.attachment
+    if (this.props.expanded !== true) {
+      text = truncate(text, 256)
+      attachment = truncate(attachment, 256)
+    }
+
     if (message.type == 'url') {
       linkOrText = (
         <TouchableOpacity onPress={() => Linking.openURL(message.text)}>
-          <Text style={styles.messageUrl}>{message.text}</Text>
+          <Text style={message.style}>{text}</Text>
         </TouchableOpacity>
       )
 
     } else {
       linkOrText = (
-        <Autolink style={message.style} text={message.text} />
+        <Autolink style={message.style} text={text} />
       )
     }
 
     return (
       <View key={message['key']}>
         {linkOrText}
-        {message.attachment &&
+        {attachment &&
           <View style={styles.attachment}>
-            <Text>{message.attachment}</Text>
+            <Text>{attachment}</Text>
           </View>
         }
       </View>
