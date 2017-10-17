@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState } from 'react-native';
 import Autolink from 'react-native-autolink';
+import { Notifications } from 'expo';
 import Item from './Item'
 import Message from './Message';
 import ToolBar from './ToolBar';
@@ -126,7 +127,7 @@ export default class Chat extends React.Component {
               // merge sub messages for the item
               var body = ""
               messages.forEach(sub => body += sub["text"])
-              var iconUrl = this.getAvatarUrl(m)
+              var iconUrl = getAvatarUrl(m)
               this.presentNotification(title, body, iconUrl)
             })
           })
