@@ -5,6 +5,7 @@ import Loading from './Loading';
 export default class LoadingScreen extends React.Component {
   static navigationOptions = {
     header: null,
+    drawerLockMode: 'locked-closed',
   }
 
   componentDidMount() {

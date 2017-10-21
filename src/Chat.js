@@ -20,7 +20,7 @@ function _isUrl(s) {
 export default class Chat extends React.Component {
   static navigationOptions = ({ navigation }) => ({
     title: `${navigation.state.params.title}`,
-    headerRight: <ToolBar onLogout={navigation.state.params.onLogout}/>,
+    headerRight: <ToolBar onLogout={navigation.state.params.onLogout} onMenu={() => navigation.navigate('DrawerOpen')} />,
   })
 
   state = {

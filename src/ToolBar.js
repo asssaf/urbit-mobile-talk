@@ -10,22 +10,11 @@ export default class ToolBar extends React.Component {
     ])
   }
 
-  confirmReload() {
-    Alert.alert('Reload', 'Are you sure you want to reload the app?', [
-      { text: 'Ok', onPress: () => this.doReload() },
-      { text: 'Cancel' },
-    ])
-  }
-
-  doReload() {
-    Expo.Util.reload()
-  }
-
   render() {
     return (
       <View style={styles.row}>
         <GlyphButton glyph="sign-out" onPress={() => this.confirmLogout()} />
-        <GlyphButton glyph="ellipsis-v" onPress={() => this.confirmReload()} />
+        <GlyphButton glyph="ellipsis-v" onPress={() => this.props.onMenu()} />
       </View>
     )
   }

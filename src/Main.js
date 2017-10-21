@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { StackNavigator, NavigationActions } from 'react-navigation';
+import { DrawerNavigator, NavigationActions, StackNavigator } from 'react-navigation';
 import Login from './Login';
 import LoadingScreen from './LoadingScreen';
 import Chat from './Chat';
+import ChatMenu from './ChatMenu';
 import ViewMessage from './ViewMessage'
 import Urbit from './Urbit';
 import { loadState, saveState } from './persistence'
@@ -29,6 +30,14 @@ const ChatNavigator = StackNavigator({
     headerTintColor: 'white',
     headerStyle: { backgroundColor: 'lightseagreen' },
   },
+})
+
+const MenuNavigator = DrawerNavigator({
+  Chat: {
+    screen: ChatNavigator,
+  },
+}, {
+  contentComponent: ChatMenu,
 })
 
 export default class Main extends React.Component {
@@ -150,7 +159,7 @@ export default class Main extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.header} />
-        <ChatNavigator screenProps={screenProps} ref={(nav) => {this.navigator = nav; } } />
+        <MenuNavigator screenProps={screenProps} ref={(nav) => {this.navigator = nav; } } />
       </View>
     )
   }

@@ -4,7 +4,8 @@ import Urbit from './Urbit';
 
 export default class Login extends React.Component {
   static navigationOptions = {
-    title: 'Login to your Urbit'
+    title: 'Login to your Urbit',
+    drawerLockMode: 'locked-closed'
   }
 
   state = {
