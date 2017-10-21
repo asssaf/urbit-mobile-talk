@@ -6,7 +6,9 @@ import LoadingScreen from './LoadingScreen';
 import Chat from './Chat';
 import ChatMenu from './ChatMenu';
 import ViewMessage from './ViewMessage'
+import ViewLog from './ViewLog';
 import Urbit from './Urbit';
+import { } from './utils'
 import { loadState, saveState } from './persistence'
 
 const ChatNavigator = StackNavigator({
@@ -21,7 +23,10 @@ const ChatNavigator = StackNavigator({
   },
   ViewMessage: {
     screen: ViewMessage,
-  }
+  },
+  ViewLog: {
+    screen: ViewLog,
+  },
 }, {
   initialRouteParams: {
     statusMessage: 'Loading...',

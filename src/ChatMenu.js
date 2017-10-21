@@ -10,6 +10,10 @@ export default class ChatMenu extends React.Component {
         onPress: this.props.screenProps.onLogout,
       },
       {
+        key: 'View log',
+        onPress: () => this.props.navigation.navigate('ViewLog')
+      },
+      {
         key: 'Reload app',
         onPress: this.doReload,
       },
