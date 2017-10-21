@@ -20,12 +20,10 @@ export default class Login extends React.Component {
   urbit = new Urbit()
 
   componentDidMount() {
-    console.log("login mount")
     this.setState({ formError: "", submitted: false })
   }
 
   async doLogin() {
-    console.log("doLogin")
     this.setState({
       submitted: true,
       formError: "Connecting...",
