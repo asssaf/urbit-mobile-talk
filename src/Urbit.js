@@ -158,11 +158,7 @@ export default class Urbit {
         return false
       }
 
-      var url = session.server + "/~/is/~" + ship + "/" + app
-      if (path != '/') {
-        url += path
-      }
-      url += "/.json?PUT"
+      var url = session.server + "/~/is/~" + ship + "/" + app + path + ".json?PUT"
 
       let response = await fetch(url, {
         credentials: "same-origin",
@@ -206,7 +202,7 @@ export default class Urbit {
         console.log("Not subscribed to wire: " + wire)
         return true
       }
-      var url = session.server + "/~/is/~" + ship + "/" + app + path + "/.json?DELETE"
+      var url = session.server + "/~/is/~" + ship + "/" + app + path + ".json?DELETE"
       let response = await fetch(url, {
         credentials: "same-origin",
         headers: {
