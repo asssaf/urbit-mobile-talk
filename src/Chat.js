@@ -133,10 +133,6 @@ export default class Chat extends React.Component {
           })
         }
 
-        if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
-          this.setState({ firstItem: data.grams.num })
-        }
-
         if (this.state.audience === null) {
           var lastItem = newItems[newItems.length - 1]
           var audience = Object.keys(lastItem.messages[0].thought.audience)
@@ -158,11 +154,12 @@ export default class Chat extends React.Component {
         this.setState({ items: updatedItems })
       }
 
+      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
+        this.setState({ firstItem: data.grams.num })
+      }
+
       if (isRefresh) {
         this.setState({ refreshing: false })
-
-      } else {
-        this.setState({ loading: false })
       }
     }
   }
