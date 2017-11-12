@@ -26,7 +26,8 @@ export default class Urbit {
         authenticated: responseJson.auth.includes(user),
         oryx: responseJson.oryx,
         ixor: responseJson.ixor,
-        event: -1,
+        event: 1,
+        polling: false,
         subscriptions: {},
         lastUpdate: new Date(),
         beatListeners: [],
@@ -184,8 +185,7 @@ export default class Urbit {
       var responseJson = await response.json()
       console.log("Subscribed successfully: " + wire)
       session.subscriptions[wire] = callback
-      if (session.event == -1) {
-        session.event = 1;
+      if (Object.keys(session.subscriptions).length === 1 && !session.polling) {
         this.poll(session);
       }
       return true
@@ -225,10 +225,6 @@ export default class Urbit {
       }
 
       delete session.subscriptions[wire]
-      if (Object.keys(session.subscriptions).length === 0) {
-        // cancel polling
-        session.event = -1
-      }
       console.log("Unsubscribed successfully: " + wire)
 
       return true
@@ -240,13 +236,15 @@ export default class Urbit {
   }
 
   async poll(session) {
+    session.polling = true
     while (true) {
       try {
         var url = session.server + "/~/of/" + session.ixor + "?poll=" + session.event
         var response = await fetch(url)
 
-        if (session.event == -1) {
-          // polling cancelled
+        if (Object.keys(session.subscriptions).length === 0) {
+          // stop polling
+          session.polling = false
           return true
         }
 
