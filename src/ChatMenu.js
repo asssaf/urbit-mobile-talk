@@ -14,6 +14,10 @@ export default class ChatMenu extends React.Component {
         onPress: () => this.props.navigation.navigate('ViewLog')
       },
       {
+        key: 'Resubscribe',
+        onPress: () => this.doResubscribe()
+      },
+      {
         key: 'Reload app',
         onPress: this.doReload,
       },
@@ -21,6 +25,11 @@ export default class ChatMenu extends React.Component {
   }
 
   urbit = new Urbit()
+
+  doResubscribe() {
+    this.props.screenProps.refs["Chat"].doRejoin()
+    this.props.navigation.navigate('DrawerClose')
+  }
 
   doReload() {
     Expo.Util.reload()

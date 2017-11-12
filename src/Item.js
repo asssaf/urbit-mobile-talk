@@ -38,6 +38,9 @@ export default class Item extends React.Component {
               <Text style={styles.sender}>~{sender}</Text>
               <Text style={styles.timestamp}>{time}</Text>
               <Text style={styles.audience}>{audience}</Text>
+              {this.props.expanded === true &&
+                <Text style={styles.audience}>{firstMessage.thought.serial}</Text>
+              }
             </View>
             {this.props.expanded !== true &&
               <View>

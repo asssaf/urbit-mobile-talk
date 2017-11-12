@@ -159,6 +159,7 @@ export default class Main extends React.Component {
       onLogout: this.doLogout.bind(this),
       onLogin: this.handleLogin.bind(this),
       setRouteKey: this.setRouteKey.bind(this),
+      refs: {},
     }
 
     return (

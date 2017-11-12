@@ -32,15 +32,18 @@ export default class Chat extends React.Component {
     inChannel: false,
     refreshing: false,
     firstItem: -1,
+    lastItem: -1,
     lastUpdate: null,
     appState: AppState.currentState,
     submitted: false,
+    subscribedPath: null,
   }
 
   urbit = new Urbit();
 
   componentDidMount() {
     AppState.addEventListener('change', this._handleAppStateChange)
+    this.props.screenProps.refs["Chat"] = this
     loadState.bind(this)({ audience: null })
     this.doJoin()
   }
@@ -67,10 +70,13 @@ export default class Chat extends React.Component {
   async doJoin() {
     var wire = "/messages"
     var path = "/f/" + this.urbit.getPorch(this.state.user)
+    if (this.state.lastItem > -1) {
+      path += '/' + this.urbit.formatNumber(this.state.lastItem)
+    }
     var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
 
     if (res) {
-      this.setState({ inChannel: true })
+      this.setState({ inChannel: true, subscribedPath: path })
       this.state.session.beatListeners[0] = this._handleSessionBeat
 
     } else {
@@ -80,11 +86,16 @@ export default class Chat extends React.Component {
 
   async doLeave() {
     res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages',
-        'talk', '/f/' + this.urbit.getPorch(this.state.user))
+        'talk', this.subscribedPath)
 
     if (!res) {
       console.log("Failed to unsubscribe")
     }
+  }
+
+  async doRejoin() {
+    await this.doLeave()
+    await this.doJoin()
   }
 
   presentNotification(title, body, iconUrl) {
@@ -113,6 +124,19 @@ export default class Chat extends React.Component {
     } else if (data.grams) {
       if (data.grams.tele.length > 0) {
         var newItems = []
+
+        // if the first new message is a duplicate of the last old message, skip it
+        if (this.state.items.length > 0) {
+          var lastItem = this.state.items[this.state.items.length - 1]
+          var lastMessage = lastItem.messages[lastItem.messages.length - 1]
+          if (data.grams.tele[0].thought.serial === lastMessage.thought.serial) {
+            if (data.grams.tele.length == 1) {
+              return
+            }
+            data.grams.tele = data.grams.tele.slice(1)
+          }
+        }
+
         data.grams.tele.forEach(t => {
           t.subMessages = this.processSpeech(t, t.thought.statement.speech)
           this.addMessage(newItems, t)
@@ -149,6 +173,7 @@ export default class Chat extends React.Component {
         } else {
           // concatenate with possible merge of middle item
           updatedItems = this.concatItems(this.state.items.slice(), newItems)
+          this.setState({ lastItem: data.grams.num + data.grams.tele.length })
         }
 
         this.setState({ items: updatedItems })

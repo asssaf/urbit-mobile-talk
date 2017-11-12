@@ -236,6 +236,10 @@ export default class Urbit {
   }
 
   async poll(session) {
+    if (session.polling) {
+      console.log("Already polling")
+      return
+    }
     session.polling = true
     while (true) {
       try {
