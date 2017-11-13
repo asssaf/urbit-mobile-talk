@@ -36,7 +36,6 @@ export default class Chat extends React.Component {
     lastUpdate: null,
     appState: AppState.currentState,
     submitted: false,
-    subscribedPath: null,
   }
 
   urbit = new Urbit();
@@ -76,7 +75,7 @@ export default class Chat extends React.Component {
     var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
 
     if (res) {
-      this.setState({ inChannel: true, subscribedPath: path })
+      this.setState({ inChannel: true })
       this.state.session.beatListeners[0] = this._handleSessionBeat
 
     } else {
@@ -85,8 +84,7 @@ export default class Chat extends React.Component {
   }
 
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages',
-        'talk', this.subscribedPath)
+    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages', 'talk')
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -166,9 +164,7 @@ export default class Chat extends React.Component {
         var updatedItems
         if (isRefresh) {
           updatedItems = newItems.concat(this.state.items.slice())
-
-          var path = wire.substring('/refresh'.length)
-          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'talk', path)
+          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'talk')
 
         } else {
           // concatenate with possible merge of middle item
