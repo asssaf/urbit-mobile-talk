@@ -334,6 +334,8 @@ export default class Chat extends React.Component {
     if (this.listRef) {
       this.listRef.scrollToEnd()
     }
+
+    this.setState({ typing: '' })
     for (var i = 0; i < speeches.length; ++ i) {
       var res = await this.sendMessageSpeech(speeches[i])
 
@@ -344,10 +346,8 @@ export default class Chat extends React.Component {
       }
     }
 
-    // set the component state (clears text input)
     this.setState({
       submitted: false,
-      typing: '',
     });
 
     saveState('audience', this.state.audience)
