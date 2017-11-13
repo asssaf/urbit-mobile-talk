@@ -35,9 +35,19 @@ export default class Item extends React.Component {
           <Image style={styles.avatar} source={{uri: avatarUrl}} />
           <View style={styles.rowText}>
             <View style={headerStyle}>
-              <Text style={styles.sender}>~{sender}</Text>
+              <TouchableOpacity
+                disabled={!this.props.onSenderPress}
+                onPress={() => this.props.onSenderPress([ this.urbit.getPorchStation(firstMessage.ship) ])}
+              >
+                <Text style={styles.sender}>~{sender}</Text>
+              </TouchableOpacity>
               <Text style={styles.timestamp}>{time}</Text>
-              <Text style={styles.audience}>{audience}</Text>
+              <TouchableOpacity
+                disabled={!this.props.onAudiencePress}
+                onPress={() => this.props.onAudiencePress(Object.keys(firstMessage.thought.audience))}
+              >
+                <Text style={styles.audience}>{audience}</Text>
+              </TouchableOpacity>
               {this.props.expanded === true &&
                 <Text style={styles.audience}>{firstMessage.thought.serial}</Text>
               }

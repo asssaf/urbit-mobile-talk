@@ -448,6 +448,13 @@ export default class Chat extends React.Component {
     this.props.navigation.navigate('ViewMessage', { message: message })
   }
 
+  confirmAudience(audience) {
+    Alert.alert('Set Audience', 'Set the audience to: "' + formatAudience(audience) + '" ?', [
+      { text: 'Ok', onPress: () => this.setState({ audience }) },
+      { text: 'Cancel' },
+    ])
+  }
+
   isSendDisabled() {
     if (this.state.audience == null
         || this.state.audience.length == 0
@@ -538,7 +545,10 @@ export default class Chat extends React.Component {
   renderItem({item}) {
     return (
       <View style={styles.row} key={item.messages[0].thought.serial}>
-        <Item messages={item.messages} onMessagePress={this.handleMessagePress.bind(this)} />
+        <Item messages={item.messages} onMessagePress={this.handleMessagePress.bind(this)}
+          onSenderPress={this.confirmAudience.bind(this)}
+          onAudiencePress={this.confirmAudience.bind(this)}
+        />
       </View>
     )
   }

@@ -337,4 +337,8 @@ export default class Urbit {
       return "porch"
     }
   }
+
+  getPorchStation(ship) {
+    return "~" + ship + "/" + this.getPorch(ship)
+  }
 }
