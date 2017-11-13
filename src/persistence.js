@@ -16,3 +16,14 @@ export async function saveState(key, value) {
     console.log(error)
   }
 }
+
+export function updateLru(items, newItem, limit = 5) {
+  var updated = [ newItem ]
+  updated.push(...items.filter(i => i != newItem))
+
+  if (updated.length > limit) {
+    updated = updated.slice(0, limit)
+  }
+
+  return updated
+}

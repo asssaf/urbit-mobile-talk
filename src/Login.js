@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
+import EditableDropDown from './EditableDropDown';
 import Urbit from './Urbit';
+import { loadState, saveState, updateLru } from './persistence'
 
 export default class Login extends React.Component {
   static navigationOptions = {
@@ -16,12 +18,15 @@ export default class Login extends React.Component {
     submitted: false,
     customServer: this.props.navigation.state.params.server.length > 0,
     server: this.props.navigation.state.params.server,
+    userRecent: [],
+    serverRecent: [],
   }
 
   urbit = new Urbit()
 
   componentDidMount() {
     this.setState({ formError: "", submitted: false })
+    loadState.bind(this)({ userRecent: [], serverRecent: [] })
   }
 
   async doLogin() {
@@ -51,6 +56,10 @@ export default class Login extends React.Component {
     var result = await this.urbit.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
+      saveState('userRecent', updateLru(this.state.userRecent, this.state.user))
+      if (this.state.customServer && this.state.server.length > 0) {
+        saveState('serverRecent', updateLru(this.state.serverRecent, this.state.server))
+      }
       this.props.screenProps.onLogin(session, this.state.user, this.state.customServer ? this.state.server : '')
 
     } else {
@@ -87,14 +96,22 @@ export default class Login extends React.Component {
       <View style={styles.container}>
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>User</Text>
-          <TextInput
-            editable={!this.state.submitted}
-            value={this.state.user}
-            onChangeText={text => this.setState({user: text.trim()})}
-            style={styles.input}
-            underlineColorAndroid="transparent"
-            placeholder="zod"
-          />
+          <EditableDropDown
+              enabled={!this.state.submitted}
+              options={this.state.userRecent}
+              defaultValue={this.state.user}
+              onItemSelected={user => this.setState({ user })}
+              style={styles.picker}
+          >
+            <TextInput
+              editable={!this.state.submitted}
+              value={this.state.user}
+              onChangeText={text => this.setState({user: text.trim()})}
+              style={styles.input}
+              underlineColorAndroid="transparent"
+              placeholder="zod"
+            />
+          </EditableDropDown>
         </View>
 
         <View style={styles.formRow}>
@@ -119,14 +136,22 @@ export default class Login extends React.Component {
         {this.state.customServer &&
           <View style={styles.formRow}>
             <Text style={styles.formLabel}>Server</Text>
-            <TextInput
-              editable={!this.state.submitted}
-              value={this.state.server}
-              onChangeText={text => this.setState({server: text.trim()})}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="https://ship.urbit.org"
-            />
+            <EditableDropDown
+                enabled={!this.state.submitted}
+                options={this.state.serverRecent}
+                defaultValue={this.state.server}
+                onItemSelected={server => this.setState({ server })}
+                style={styles.picker}
+            >
+              <TextInput
+                editable={!this.state.submitted}
+                value={this.state.server}
+                onChangeText={text => this.setState({server: text.trim()})}
+                style={styles.input}
+                underlineColorAndroid="transparent"
+                placeholder="https://ship.urbit.org"
+              />
+            </EditableDropDown>
           </View>
         }
 
@@ -151,6 +176,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     fontSize: 18,
+    flex: 1,
+  },
+  picker: {
+    marginLeft: 17,
+    marginTop: 6,
     flex: 1,
   },
   send: {
