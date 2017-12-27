@@ -68,11 +68,17 @@ export default class Chat extends React.Component {
 
   async doJoin() {
     var wire = "/messages"
-    var path = "/f/" + this.urbit.getPorch(this.state.user)
+    var path = "/circle/" + this.urbit.getPorch(this.state.user) + "/grams/"
     if (this.state.lastItem > -1) {
-      path += '/' + this.urbit.formatNumber(this.state.lastItem)
+      path += this.urbit.formatNumber(this.state.lastItem + 1)
+
+    } else {
+      // start from 6 hours ago
+      var startDate = new Date(new Date().getTime() - 1000*60*60*6)
+      path += this.urbit.formatDate(new Date(startDate))
     }
-    var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "talk", path, (wire, data) => this.handleMessages(wire, data))
+
+    var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "hall", path, (wire, data) => this.handleMessages(wire, data))
 
     if (res) {
       this.setState({ inChannel: true })
@@ -84,7 +90,7 @@ export default class Chat extends React.Component {
   }
 
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages', 'talk')
+    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages', 'hall')
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -119,33 +125,41 @@ export default class Chat extends React.Component {
         //TODO resubscribe
       }
 
-    } else if (data.grams) {
-      if (data.grams.tele.length > 0) {
+    } else if (data.circle && (data.circle.nes || data.circle.gram)) {
+      var grams
+      if (data.circle.nes) {
+        grams = data.circle.nes
+
+      } else {
+        grams = [data.circle.gram]
+      }
+
+      if (grams.length > 0) {
         var newItems = []
 
         // if the first new message is a duplicate of the last old message, skip it
         if (this.state.items.length > 0) {
           var lastItem = this.state.items[this.state.items.length - 1]
           var lastMessage = lastItem.messages[lastItem.messages.length - 1]
-          if (data.grams.tele[0].thought.serial === lastMessage.thought.serial) {
-            if (data.grams.tele.length == 1) {
+          if (grams[0].gam.uid === lastMessage.gam.uid) {
+            if (grams.length == 1) {
               return
             }
-            data.grams.tele = data.grams.tele.slice(1)
+            grams = grams.slice(1)
           }
         }
 
-        data.grams.tele.forEach(t => {
-          t.subMessages = this.processSpeech(t, t.thought.statement.speech)
+        grams.forEach(t => {
+          t.subMessages = this.processSpeech(t, t.gam.sep)
           this.addMessage(newItems, t)
         })
 
 
         if (!isRefresh && this.state.firstItem != -1 && this.state.appState !== 'active') {
-          newItems.filter(item => (item.ship !== this.state.user)).forEach(item => {
+          newItems.filter(item => (item.gam.aut !== this.state.user)).forEach(item => {
             item.messages.forEach(m => {
-              var messages = this.processSpeech(m, m.thought.statement.speech)
-              var title = "~" + this.urbit.formatShip(m.ship, true)
+              var messages = this.processSpeech(m, m.gam.sep)
+              var title = "~" + this.urbit.formatShip(m.gam.aut, true)
               // merge sub messages for the item
               var body = ""
               messages.forEach(sub => body += sub["text"])
@@ -157,26 +171,30 @@ export default class Chat extends React.Component {
 
         if (this.state.audience === null) {
           var lastItem = newItems[newItems.length - 1]
-          var audience = Object.keys(lastItem.messages[0].thought.audience)
+          var audience = lastItem.messages[0].gam.aud
           this.setState({ audience: audience })
         }
 
         var updatedItems
         if (isRefresh) {
           updatedItems = newItems.concat(this.state.items.slice())
-          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'talk')
+          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'hall')
 
         } else {
           // concatenate with possible merge of middle item
           updatedItems = this.concatItems(this.state.items.slice(), newItems)
-          this.setState({ lastItem: data.grams.num + data.grams.tele.length })
+          this.setState({ lastItem: grams[grams.length - 1].num })
         }
 
         this.setState({ items: updatedItems })
       }
 
-      if (this.state.firstItem == -1 || data.grams.num < this.state.firstItem) {
-        this.setState({ firstItem: data.grams.num })
+      var firstItem = 0
+      if (grams.length > 0) {
+        firstItem = grams[0].num
+      }
+      if ((this.state.firstItem == -1 || firstItem < this.state.firstItem)) {
+        this.setState({ firstItem: firstItem })
       }
 
       if (isRefresh) {
@@ -207,7 +225,7 @@ export default class Chat extends React.Component {
   addMessage(items, newMessage) {
     if (items.length == 0 || !this.canMerge(items[items.length - 1], newMessage)) {
       newItem = {
-        key: newMessage.thought.serial,
+        key: newMessage.gam.uid,
         messages: [newMessage]
       }
       items.push(newItem)
@@ -222,16 +240,15 @@ export default class Chat extends React.Component {
    */
   canMerge(item, newMessage) {
     var lastMessage = item.messages[item.messages.length - 1]
-    if (lastMessage.ship !== newMessage.ship) {
+    if (lastMessage.gam.aut !== newMessage.gam.aut) {
       return false
     }
 
-    if (!this.sameAudience(Object.keys(lastMessage.thought.audience),
-        Object.keys(newMessage.thought.audience))) {
+    if (!this.sameAudience(lastMessage.gam.aud, newMessage.gam.aud)) {
       return false
     }
 
-    if (newMessage.thought.statement.date - lastMessage.thought.statement.date > 3600000) {
+    if (newMessage.gam.wen - lastMessage.gam.wen > 3600000) {
       return false
     }
 
@@ -246,57 +263,61 @@ export default class Chat extends React.Component {
     var type = Object.keys(speech)[0]
 
     var message = {
-      key: serial || m.thought.serial,
-      date: m.thought.statement.date,
-      sender: m.ship,
-      audience: m.thought.audience,
+      key: serial || m.gam.uid,
+      date: m.gam.wen,
+      sender: m.gam.aut,
+      audience: m.gam.aud,
       style: styles.message,
       type: type,
     }
 
     var messages = [message]
 
-    if (type == 'lin' || type == 'url' || type == 'exp') {
-      message["text"] = speech[type].txt
+    if (type == 'lin') {
+      message["text"] = speech[type].msg
 
-      if (type == 'lin' && !speech.lin.say) {
+      if (speech.lin.pat) {
         message["style"] = styles.messageAct
-
-      } else if (type == 'exp') {
-        message["style"] = styles.messageCode
-
-      } else if (type == 'url') {
-        message["style"] = styles.messageUrl
       }
+
+    } else if (type == 'url') {
+      message["text"] = speech.url
+      message["style"] = styles.messageUrl
+
+    } else if (type == 'exp') {
+      message["text"] = speech.exp.exp
+      message["attachment"] = speech.exp.res.map(r => r.join('\n')).join('\n')
+      message["style"] = styles.messageCode
+
 
     } else if (type == 'app') {
-      message["text"] = speech[type].src + ": " + speech[type].txt
-
-    } else if (type == 'mor') {
-      var subItems = speech.mor
-      var i
-      messages = []
-      for (i = 0; i < subItems.length; ++i) {
-        messages = messages.concat(this.processSpeech(m, subItems[i], serial + "/" + i))
-      }
+      messages = this.processSpeech(m, speech.app.sep, serial + 1)
+      message = messages[0]
+      message["text"] = "[" + speech.app.app + "]: " + message["text"]
 
     } else if (type == 'fat') {
-      messages = this.processSpeech(m, speech.fat.taf, serial + 1)
-      message = messages[0]
+      messages = this.processSpeech(m, speech.fat.sep, serial + 1)
+      message["text"] = messages[0]["text"]
+      messages[0] = message
 
-      if (speech.fat.tor.text) {
-        message["attachment"] = speech.fat.tor.text
+      if (speech.fat.tac.text) {
+        message["attachment"] = speech.fat.tac.text
 
-      } else if (speech.fat.tor.tank) {
-        message["attachment"] = speech.fat.tor.tank.join('\n')
+      } else if (speech.fat.tac.tank) {
+        message["attachment"] = speech.fat.tac.tank.join('\n')
 
-      } else if (speech.fat.tor.name) {
+      } else if (speech.fat.tac.name) {
         //TODO add name label
-        message["attachment"] = speech.fat.tor.name.mon
+        message["attachment"] = speech.fat.tac.name.tac.text
       }
 
+    } else if (type == 'ire') {
+      //TODO link to origin message speech.ire.top
+      messages = this.processSpeech(m, speech.ire.sep, serial)
+      message = messages[0]
+
     } else {
-      console.log("Unhandled speech: %" + type)
+      console.log("Unhandled speech: %" + type, speech)
       message["text"] = 'Unhandled speech: %' + type
     }
 
@@ -318,15 +339,15 @@ export default class Chat extends React.Component {
       speeches.push(this.buildSpeech("eval", text.substring(1)))
 
     } else {
-      var say = true
+      var pat = false
       if (text.charAt(0) == '@') {
         text = text.substring(1)
-        say = false
+        pat = true
       }
 
       this.breakTextToLines(text).forEach(line => {
         if (line.trim().length > 0) {
-          speeches.push(this.buildSpeech('lin', line, say))
+          speeches.push(this.buildSpeech('lin', line, pat))
         }
       })
     }
@@ -354,30 +375,11 @@ export default class Chat extends React.Component {
   }
 
   async sendMessageSpeech(speech) {
-    var audi = {}
-    this.state.audience.forEach(aud => {
-      audi[aud] = {
-        envelope: {
-          visible: true,
-          sender: null
-        },
-        delivery: "pending"
+    return this.urbit.poke(this.state.session, 'hall', 'hall-action', '/', {
+      phrase: {
+        aud: this.state.audience,
+        ses: [ speech ],
       }
-    })
-    var message = {
-        serial: this.urbit.uuid32(),
-        audience: audi,
-        statement: {
-          bouquet: [],
-          speech: speech,
-          date: Date.now()
-        }
-    }
-
-    return this.urbit.poke(this.state.session, 'talk', 'talk-command', '/', {
-      publish: [
-        message
-      ]
     })
   }
 
@@ -385,8 +387,8 @@ export default class Chat extends React.Component {
     var speech
     if (type == "lin") {
       speech = {
-        txt: text,
-        say: arg
+        msg: text,
+        pat: arg
       }
 
     } else {
@@ -429,14 +431,14 @@ export default class Chat extends React.Component {
     this.setState({ refreshing: true })
 
     var maxFetchItems = 32
-    var end = this.state.firstItem + 1
+    var end = this.state.firstItem - 1
     var start = Math.max(0, end - maxFetchItems)
-    var path = '/f/' + this.urbit.getPorch(this.state.user)
+    var path = '/circle/' + this.urbit.getPorch(this.state.user) + '/grams'
         + '/' + this.urbit.formatNumber(start)
         + '/' + this.urbit.formatNumber(end)
 
     var res = await this.urbit.subscribe(this.state.session, this.state.user,
-        '/refresh' + path, 'talk', path, this.handleMessages.bind(this))
+        '/refresh' + path, 'hall', path, this.handleMessages.bind(this))
 
     if (!res) {
       console.log("refresh failed")
@@ -544,7 +546,7 @@ export default class Chat extends React.Component {
 
   renderItem({item}) {
     return (
-      <View style={styles.row} key={item.messages[0].thought.serial}>
+      <View style={styles.row} key={item.messages[0].gam.uid}>
         <Item messages={item.messages} onMessagePress={this.handleMessagePress.bind(this)}
           onSenderPress={this.confirmAudience.bind(this)}
           onAudiencePress={this.confirmAudience.bind(this)}

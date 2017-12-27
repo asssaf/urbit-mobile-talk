@@ -170,6 +170,7 @@ export default class Urbit {
         body: JSON.stringify({
           oryx: session.oryx,
           wire: wire,
+          path: path,
           appl: app,
           mark: 'json',
           ship: ship
@@ -294,23 +295,28 @@ export default class Urbit {
     }
   }
 
-  uuid32() {
-    var _str, i, j, str;
-    str = "0v";
-    str += Math.ceil(Math.random() * 8) + ".";
-    for (i = j = 0; j <= 5; i = ++j) {
-      _str = Math.ceil(Math.random() * 10000000).toString(32);
-      _str = ("00000" + _str).substr(-5, 5);
-      str += _str + ".";
-    }
-    return str.slice(0, -1);
-  }
-
   /**
-   * format a number the urbit way (with dots)
+   * format a number the urbit way (1.024)
    */
   formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  /**
+   * format a date the urbit way (~2017.12.27..18.48.00..0000)
+   */
+  formatDate(dat) {
+    var mils = Math.floor((0x10000 * dat.getUTCMilliseconds()) / 1000).toString(16)
+    function pad(num, str){
+      return ((new Array(num + 1)).join('0') + str).substr(-num,num)
+    }
+    return  '~' + dat.getUTCFullYear() +
+            '.' + (dat.getUTCMonth() + 1) +
+            '.' + dat.getUTCDate() +
+           '..' + pad(2, dat.getUTCHours()) +
+            '.' + pad(2, dat.getUTCMinutes()) +
+            '.' + pad(2, dat.getUTCSeconds()) +
+           '..' + pad(4, mils)
   }
 
   formatStation(stationShip, stationChannel, short) {
@@ -327,15 +333,7 @@ export default class Urbit {
   }
 
   getPorch(ship) {
-    if (ship.length == 3) {
-      return "court"
-
-    } else if (ship.length == 7) {
-      return "floor"
-
-    } else {
-      return "porch"
-    }
+    return "inbox"
   }
 
   getPorchStation(ship) {

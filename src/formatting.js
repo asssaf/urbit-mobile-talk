@@ -39,7 +39,7 @@ export function formatAudience(audience, short) {
 
 
 export function getAvatarUrl(message) {
-  return 'https://robohash.org/~.~' + message.ship
+  return 'https://robohash.org/~.~' + message.gam.aut
 }
 
 

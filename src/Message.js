@@ -13,7 +13,7 @@ export default class Message extends React.Component {
     message.subMessages.forEach(m => rendered.push(this.renderItemSubMessage(m)))
 
     return (
-      <View key={message.thought.serial}>
+      <View key={message.gam.uid}>
         {rendered}
       </View>
     )

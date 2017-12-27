@@ -15,9 +15,9 @@ export default class Item extends React.Component {
   renderItem(messages) {
     var firstMessage = messages[0]
     var avatarUrl = getAvatarUrl(firstMessage)
-    var sender = this.urbit.formatShip(firstMessage.ship, this.props.expanded !== true)
-    var audience = formatAudience(Object.keys(firstMessage.thought.audience), this.props.expanded !== true)
-    var time = formatTime(new Date(firstMessage.thought.statement.date), this.props.expanded !== true)
+    var sender = this.urbit.formatShip(firstMessage.gam.aut, this.props.expanded !== true)
+    var audience = formatAudience(firstMessage.gam.aud, this.props.expanded !== true)
+    var time = formatTime(new Date(firstMessage.gam.wen), this.props.expanded !== true)
 
     var renderedMessages = []
     for (var i = 0; i < messages.length; ++i) {
@@ -37,19 +37,19 @@ export default class Item extends React.Component {
             <View style={headerStyle}>
               <TouchableOpacity
                 disabled={!this.props.onSenderPress}
-                onPress={() => this.props.onSenderPress([ this.urbit.getPorchStation(firstMessage.ship) ])}
+                onPress={() => this.props.onSenderPress([ this.urbit.getPorchStation(firstMessage.gam.aut) ])}
               >
                 <Text style={styles.sender}>~{sender}</Text>
               </TouchableOpacity>
               <Text style={styles.timestamp}>{time}</Text>
               <TouchableOpacity
                 disabled={!this.props.onAudiencePress}
-                onPress={() => this.props.onAudiencePress(Object.keys(firstMessage.thought.audience))}
+                onPress={() => this.props.onAudiencePress(firstMessage.gam.aud)}
               >
                 <Text style={styles.audience}>{audience}</Text>
               </TouchableOpacity>
               {this.props.expanded === true &&
-                <Text style={styles.audience}>{firstMessage.thought.serial}</Text>
+                <Text style={styles.audience}>{firstMessage.gam.uid}</Text>
               }
             </View>
             {this.props.expanded !== true &&
@@ -71,7 +71,7 @@ export default class Item extends React.Component {
   renderItemMessage(message) {
     return (
       <TouchableOpacity
-          key={message.thought.serial}
+          key={message.gam.uid}
           disabled={this.props.expanded === true}
           onPress={() => this.props.onMessagePress(message)}>
         <Message message={message} expanded={this.props.expanded} />
