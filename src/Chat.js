@@ -335,7 +335,7 @@ export default class Chat extends React.Component {
       speeches.push(this.buildSpeech("url", text))
 
     } else if (text.charAt(0) == '#') {
-      speeches.push(this.buildSpeech("eval", text.substring(1)))
+      speeches.push(this.buildSpeech("exp", text.substring(1)))
 
     } else {
       var pat = false
@@ -388,6 +388,11 @@ export default class Chat extends React.Component {
       speech = {
         msg: text,
         pat: arg
+      }
+
+    } else if (type == "exp") {
+      speech = {
+        exp: text
       }
 
     } else {
