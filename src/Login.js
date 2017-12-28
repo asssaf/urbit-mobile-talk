@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
 import urbit from '@asssaf/urbit';
 import EditableDropDown from './EditableDropDown';
+import CodeReader from './CodeReader';
+import GlyphButton from './GlyphButton';
 import { loadState, saveState, updateLru } from './persistence'
 
 export default class Login extends React.Component {
@@ -20,6 +22,7 @@ export default class Login extends React.Component {
     server: this.props.navigation.state.params.server,
     userRecent: [],
     serverRecent: [],
+    codeReaderVisible: false,
   }
 
   componentDidMount() {
@@ -89,6 +92,38 @@ export default class Login extends React.Component {
 
   toggleCustomServer() {
     this.setState({ customServer: !this.state.customServer })
+  }
+
+  toggleCodeReader = () => {
+    this.setState({ codeReaderVisible: !this.state.codeReaderVisible })
+  }
+
+  handleCodeRead = ({ type, data }) => {
+    try {
+      var dataObj = JSON.parse(data);
+
+      ["user", "code"].forEach(prop => {
+        if (dataObj[prop] && dataObj[prop].trim().length > 0) {
+          this.setState({ [prop]: dataObj[prop].trim() })
+        }
+      })
+
+      if (dataObj["server"] && dataObj["server"].trim().length > 0) {
+        this.setState({
+          server: dataObj["server"].trim(),
+          customServer: true
+        })
+
+      } else {
+        this.setState({ customServer: false })
+      }
+
+      this.setState({ codeReaderVisible: false })
+
+    } catch (error) {
+      //TODO show error message
+      console.log("Invalid code", error)
+    }
   }
 
   render() {
@@ -162,6 +197,17 @@ export default class Login extends React.Component {
         <TouchableOpacity disabled={this.isDisabled()} onPress={this.doLogin.bind(this)}>
           <Text style={this.isDisabled() ? styles.sendDisabled : styles.send}>Login</Text>
         </TouchableOpacity>
+
+        <View style={{alignSelf: 'center'}}>
+          <GlyphButton glyph="qrcode"  color="black"
+              onPress={() => this.toggleCodeReader()} style={{alignSelf: 'center'}}/>
+        </View>
+
+        {this.state.codeReaderVisible &&
+          <View style={{alignSelf: 'center'}}>
+            <CodeReader onCodeRead={this.handleCodeRead} />
+          </View>
+        }
       </View>
     );
   }
