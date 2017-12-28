@@ -1,14 +1,15 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DrawerNavigator, NavigationActions, StackNavigator } from 'react-navigation';
+import urbit from '@asssaf/urbit';
 import Login from './Login';
 import LoadingScreen from './LoadingScreen';
 import Chat from './Chat';
 import ChatMenu from './ChatMenu';
 import ViewMessage from './ViewMessage'
 import ViewLog from './ViewLog';
-import Urbit from './Urbit';
-import { } from './utils'
+import { } from './utils';
+import { formatShip } from './urbit-utils'
 import { loadState, saveState } from './persistence'
 
 const ChatNavigator = StackNavigator({
@@ -49,13 +50,12 @@ export default class Main extends React.Component {
   state = {
     user: "",
     server: "",
+    cookie: null,
     session: { user: '', server: ''},
   };
 
-  urbit = new Urbit()
-
   async componentDidMount() {
-    loadState.bind(this)({ user: '', server: '' })
+    loadState.bind(this)({ user: '', server: '', cookie: null })
       .then(v => this.checkLogin())
       .catch(e => this.checkLogin())
   }
@@ -86,7 +86,7 @@ export default class Main extends React.Component {
         NavigationActions.navigate({
           routeName: 'Chat',
           params: {
-            title: '~' + this.urbit.formatShip(this.state.user, true),
+            title: '~' + formatShip(this.state.user, true),
             onLogout: this.doLogout.bind(this),
           },
         })
@@ -100,7 +100,7 @@ export default class Main extends React.Component {
   }
 
   async checkLogin() {
-    if (this.state.user == "") {
+    if (this.state.user == "" || !this.state.cookie) {
       this.switchToLogin()
       return
     }
@@ -117,7 +117,10 @@ export default class Main extends React.Component {
     } else {
       server = 'https://' + this.state.user + '.urbit.org'
     }
-    var session = await this.urbit.getSession(server, this.state.user)
+
+    var session = await urbit.webapi.getSession(
+          server, this.state.user, this.state.cookie)
+
     this.setState({ loading: false })
     if (session && session.authenticated) {
       this.handleLogin(session, this.state.user, this.state.server)
@@ -135,6 +138,7 @@ export default class Main extends React.Component {
     // store the user for next time
     saveState('user', user)
     saveState('server', server)
+    saveState('cookie', session.cookie)
   }
 
   handleLoadingCancel() {
@@ -143,7 +147,7 @@ export default class Main extends React.Component {
   }
 
   async doLogout() {
-    var res = await this.urbit.deleteSession(this.state.session)
+    var res = await urbit.webapi.deleteSession(this.state.session)
     if (!res) {
       console.log("Failed to logout")
     }

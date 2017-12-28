@@ -3,11 +3,12 @@ import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
     TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState } from 'react-native';
 import Autolink from 'react-native-autolink';
 import { Notifications } from 'expo';
+import urbit from '@asssaf/urbit';
 import Item from './Item'
 import Message from './Message';
 import ToolBar from './ToolBar';
 import Loading from './Loading';
-import Urbit from './Urbit';
+import { formatDate, formatNumber, formatShip, getPorch } from './urbit-utils';
 import { loadState, saveState } from './persistence';
 import { formatTime, formatAudience, getAvatarUrl } from './formatting';
 
@@ -38,8 +39,6 @@ export default class Chat extends React.Component {
     submitted: false,
   }
 
-  urbit = new Urbit();
-
   componentDidMount() {
     AppState.addEventListener('change', this._handleAppStateChange)
     this.props.screenProps.refs["Chat"] = this
@@ -68,29 +67,29 @@ export default class Chat extends React.Component {
 
   async doJoin() {
     var wire = "/messages"
-    var path = "/circle/" + this.urbit.getPorch(this.state.user) + "/grams/"
+    var path = "/circle/" + getPorch(this.state.user) + "/grams/"
     if (this.state.lastItem > -1) {
-      path += this.urbit.formatNumber(this.state.lastItem + 1)
+      path += formatNumber(this.state.lastItem + 1)
 
     } else {
       // start from 6 hours ago
       var startDate = new Date(new Date().getTime() - 1000*60*60*6)
-      path += this.urbit.formatDate(new Date(startDate))
+      path += formatDate(new Date(startDate))
     }
 
-    var res = await this.urbit.subscribe(this.state.session, this.state.user, wire, "hall", path, (wire, data) => this.handleMessages(wire, data))
+    var res = await urbit.webapi.subscribe(this.state.session, this.state.user, wire, "hall", path, (wire, data) => this.handleMessages(wire, data))
 
     if (res) {
       this.setState({ inChannel: true })
       this.state.session.beatListeners[0] = this._handleSessionBeat
 
     } else {
-      console.log("Failed to load from " + this.urbit.getPorch(this.state.user))
+      console.log("Failed to load from " + getPorch(this.state.user))
     }
   }
 
   async doLeave() {
-    res = await this.urbit.unsubscribe(this.state.session, this.state.user, '/messages', 'hall')
+    res = await urbit.webapi.unsubscribe(this.state.session, this.state.user, '/messages', 'hall')
 
     if (!res) {
       console.log("Failed to unsubscribe")
@@ -159,7 +158,7 @@ export default class Chat extends React.Component {
           newItems.filter(item => (item.gam.aut !== this.state.user)).forEach(item => {
             item.messages.forEach(m => {
               var messages = this.processSpeech(m, m.gam.sep)
-              var title = "~" + this.urbit.formatShip(m.gam.aut, true)
+              var title = "~" + formatShip(m.gam.aut, true)
               // merge sub messages for the item
               var body = ""
               messages.forEach(sub => body += sub["text"])
@@ -178,7 +177,7 @@ export default class Chat extends React.Component {
         var updatedItems
         if (isRefresh) {
           updatedItems = newItems.concat(this.state.items.slice())
-          this.urbit.unsubscribe(this.state.session, this.state.user, wire, 'hall')
+          urbit.webapi.unsubscribe(this.state.session, this.state.user, wire, 'hall')
 
         } else {
           // concatenate with possible merge of middle item
@@ -375,7 +374,7 @@ export default class Chat extends React.Component {
   }
 
   async sendMessageSpeech(speech) {
-    return this.urbit.poke(this.state.session, 'hall', 'hall-action', '/', {
+    return urbit.webapi.poke(this.state.session, 'hall', 'hall-action', '/', {
       phrase: {
         aud: this.state.audience,
         ses: [ speech ],
@@ -433,11 +432,11 @@ export default class Chat extends React.Component {
     var maxFetchItems = 32
     var end = this.state.firstItem - 1
     var start = Math.max(0, end - maxFetchItems)
-    var path = '/circle/' + this.urbit.getPorch(this.state.user) + '/grams'
-        + '/' + this.urbit.formatNumber(start)
-        + '/' + this.urbit.formatNumber(end)
+    var path = '/circle/' + getPorch(this.state.user) + '/grams'
+        + '/' + formatNumber(start)
+        + '/' + formatNumber(end)
 
-    var res = await this.urbit.subscribe(this.state.session, this.state.user,
+    var res = await urbit.webapi.subscribe(this.state.session, this.state.user,
         '/refresh' + path, 'hall', path, this.handleMessages.bind(this))
 
     if (!res) {

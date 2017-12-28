@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
-import Urbit from './Urbit';
+import { formatShip } from './urbit-utils';
 
 export default class ChatMenu extends React.Component {
   state = {
@@ -24,8 +24,6 @@ export default class ChatMenu extends React.Component {
     ]
   }
 
-  urbit = new Urbit()
-
   doResubscribe() {
     this.props.screenProps.refs["Chat"].doRejoin()
     this.props.navigation.navigate('DrawerClose')
@@ -39,7 +37,7 @@ export default class ChatMenu extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>~{this.urbit.formatShip(this.props.screenProps.session.user, true)}</Text>
+          <Text style={styles.headerTitle}>~{formatShip(this.props.screenProps.session.user, true)}</Text>
         </View>
 
         <FlatList

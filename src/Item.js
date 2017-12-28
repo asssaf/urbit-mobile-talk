@@ -1,13 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import Message from './Message';
-import Urbit from './Urbit';
+import { formatShip, getPorchStation } from './urbit-utils';
 import { formatTime, formatAudience, getAvatarUrl, truncate } from './formatting'
 
 
 export default class Item extends React.Component {
-  urbit = new Urbit()
-
   render() {
     return this.renderItem(this.props.messages)
   }
@@ -15,7 +13,7 @@ export default class Item extends React.Component {
   renderItem(messages) {
     var firstMessage = messages[0]
     var avatarUrl = getAvatarUrl(firstMessage)
-    var sender = this.urbit.formatShip(firstMessage.gam.aut, this.props.expanded !== true)
+    var sender = formatShip(firstMessage.gam.aut, this.props.expanded !== true)
     var audience = formatAudience(firstMessage.gam.aud, this.props.expanded !== true)
     var time = formatTime(new Date(firstMessage.gam.wen), this.props.expanded !== true)
 
@@ -37,7 +35,7 @@ export default class Item extends React.Component {
             <View style={headerStyle}>
               <TouchableOpacity
                 disabled={!this.props.onSenderPress}
-                onPress={() => this.props.onSenderPress([ this.urbit.getPorchStation(firstMessage.gam.aut) ])}
+                onPress={() => this.props.onSenderPress([ getPorchStation(firstMessage.gam.aut) ])}
               >
                 <Text style={styles.sender}>~{sender}</Text>
               </TouchableOpacity>

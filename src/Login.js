@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
+import urbit from '@asssaf/urbit';
 import EditableDropDown from './EditableDropDown';
-import Urbit from './Urbit';
 import { loadState, saveState, updateLru } from './persistence'
 
 export default class Login extends React.Component {
@@ -22,8 +22,6 @@ export default class Login extends React.Component {
     serverRecent: [],
   }
 
-  urbit = new Urbit()
-
   componentDidMount() {
     this.setState({ formError: "", submitted: false })
     loadState.bind(this)({ userRecent: [], serverRecent: [] })
@@ -43,7 +41,8 @@ export default class Login extends React.Component {
     } else {
       server = 'https://' + this.state.user + '.urbit.org'
     }
-    var session = await this.urbit.getSession(server, this.state.user)
+
+    var session = await urbit.webapi.getSession(server, this.state.user)
     if (!session) {
       this.setState({
         formError: "Failed to connect",
@@ -53,9 +52,10 @@ export default class Login extends React.Component {
       return
     }
 
-    var result = await this.urbit.authenticate(session, this.state.code)
+    var result = await urbit.webapi.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
+      //TODO secure store for cookie
       saveState('userRecent', updateLru(this.state.userRecent, this.state.user))
       if (this.state.customServer && this.state.server.length > 0) {
         saveState('serverRecent', updateLru(this.state.serverRecent, this.state.server))
