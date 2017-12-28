@@ -55,6 +55,20 @@ export default class Login extends React.Component {
       return
     }
 
+    if (session.authenticated && !session.cookie) {
+      console.log("Prexisting session without a cookie - removing old session")
+      await urbit.webapi.deleteSession(session)
+      session = await urbit.webapi.getSession(server, this.state.user)
+      if (!session) {
+        this.setState({
+          formError: "Failed to connect",
+          formStatusStyle: styles.formError,
+          submitted: false
+        })
+        return
+      }
+    }
+
     var result = await urbit.webapi.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
