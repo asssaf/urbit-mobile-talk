@@ -2,7 +2,7 @@
   "expo": {
     "name": "Urbit Mobile Talk",
     "icon": "./assets/images/urbit-mobile-talk.png",
-    "version": "0.13.11",
+    "version": "0.13.12",
     "slug": "urbit-mobile-talk",
     "sdkVersion": "20.0.0",
     "loading": {

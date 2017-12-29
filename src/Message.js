@@ -37,7 +37,7 @@ export default class Message extends React.Component {
 
     } else {
       linkOrText = (
-        <Autolink style={message.style} text={text} />
+        <Autolink style={message.style} text={text} selectable={true} />
       )
     }
 
@@ -46,7 +46,7 @@ export default class Message extends React.Component {
         {linkOrText}
         {attachment &&
           <View style={styles.attachment}>
-            <Text>{attachment}</Text>
+            <Text selectable={true}>{attachment}</Text>
           </View>
         }
       </View>
