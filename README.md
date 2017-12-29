@@ -5,9 +5,11 @@ Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native
 
 ## Running the published app
 ### Using the Expo app
-Download and install the Expo app for iOS/android.
+Download and install the [Expo Client app](https://expo.io/tools#client) for [iOS](https://itunes.apple.com/app/apple-store/id982107779?ct=www&mt=8)/[android](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www). Scan the QR code below in the Expo client app:
 
-Go to the app URL for a QR code: https://expo.io/@asssaf/urbit-mobile-talk
+[![urbit mobile talk QR](urbit-mobile-talk-qr.png)](https://expo.io/@asssaf/urbit-mobile-talk)
+
+Alternatively, you can copy this link to your clipboard and choose 'Open from Clipboard': [exp://exp.host/@asssaf/urbit-mobile-talk](exp://exp.host/@asssaf/urbit-mobile-talk)
 
 ### Standalone app
 "Standalone" APKs (that contain the Expo SDK) for android can be downloaded from [here](https://github.com/asssaf/urbit-mobile-talk/releases/latest).
