@@ -344,11 +344,9 @@ export default class Chat extends React.Component {
         pat = true
       }
 
-      this.breakTextToLines(text).forEach(line => {
-        if (line.trim().length > 0) {
-          speeches.push(this.buildSpeech('lin', line, pat))
-        }
-      })
+      if (text.length > 0) {
+        speeches.push(this.buildSpeech('lin', text, pat))
+      }
     }
 
     if (this.listRef) {
@@ -402,29 +400,6 @@ export default class Chat extends React.Component {
     return {
       [type]: speech
     }
-  }
-
-  breakTextToLines(text) {
-    var lines = []
-    var max = 64
-
-    while (text.length > max) {
-      var lastBreak = text.lastIndexOf(' ', max - 1)
-      var next = lastBreak + 1
-      if (lastBreak < 0) {
-        lastBreak = max
-        next = max
-      }
-      first = text.substring(0, lastBreak)
-      text = text.substring(next)
-      if (first.trim().length > 0) {
-        lines.push(first)
-      }
-    }
-
-    lines.push(text)
-
-    return lines
   }
 
   async refresh() {
