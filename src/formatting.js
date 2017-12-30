@@ -26,6 +26,15 @@ export function formatTime(date, short) {
   return f
 }
 
+export function formatShip(ship, short) {
+  if (short) {
+    if (ship.length == 56) {
+      ship = ship.substring(0, 6) + "_" + ship.substring(50)
+    }
+  }
+  return ship
+}
+
 export function formatAudience(audience, short) {
   if (audience == null) {
     return null
@@ -39,7 +48,7 @@ export function formatAudience(audience, short) {
 
 
 export function getAvatarUrl(message) {
-  return 'https://robohash.org/~.~' + message.gam.aut
+  return 'https://robohash.org/~.~' + message.sender
 }
 
 

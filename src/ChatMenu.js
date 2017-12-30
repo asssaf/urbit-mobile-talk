@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
-import { formatShip } from './urbit-utils';
+import { formatShip } from './formatting';
 
 export default class ChatMenu extends React.Component {
   state = {

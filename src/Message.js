@@ -9,17 +9,6 @@ export default class Message extends React.Component {
   }
 
   renderItemMessage(message) {
-    var rendered = []
-    message.subMessages.forEach(m => rendered.push(this.renderItemSubMessage(m)))
-
-    return (
-      <View key={message.gam.uid}>
-        {rendered}
-      </View>
-    )
-  }
-
-  renderItemSubMessage(message) {
     var linkOrText
     var text = message.text
     var attachment = message.attachment
@@ -31,13 +20,13 @@ export default class Message extends React.Component {
     if (message.type == 'url') {
       linkOrText = (
         <TouchableOpacity onPress={() => Linking.openURL(message.text)}>
-          <Text style={message.style}>{text}</Text>
+          <Text style={styles[message.style]}>{text}</Text>
         </TouchableOpacity>
       )
 
     } else {
       linkOrText = (
-        <Autolink style={message.style} text={text} selectable={true} />
+        <Autolink style={styles[message.style]} text={text} selectable={true} />
       )
     }
 
@@ -62,5 +51,20 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
     marginBottom: 10,
+  },
+  message: {
+    fontSize: 16,
+  },
+  messageAct: {
+    fontSize: 16,
+    fontStyle: 'italic'
+  },
+  messageCode: {
+    fontSize: 16,
+    fontFamily: 'monospace'
+  },
+  messageUrl: {
+    fontSize: 16,
+    color: '#0E7AFE',
   },
 });

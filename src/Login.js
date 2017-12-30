@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Switch } from 'react-native';
-import urbit from '@asssaf/urbit';
+import { webapi as urbit } from '@asssaf/urbit';
 import EditableDropDown from './EditableDropDown';
 import CodeReader from './CodeReader';
 import GlyphButton from './GlyphButton';
@@ -45,7 +45,7 @@ export default class Login extends React.Component {
       server = 'https://' + this.state.user + '.urbit.org'
     }
 
-    var session = await urbit.webapi.getSession(server, this.state.user)
+    var session = await urbit.getSession(server, this.state.user)
     if (!session) {
       this.setState({
         formError: "Failed to connect",
@@ -57,8 +57,8 @@ export default class Login extends React.Component {
 
     if (session.authenticated && !session.cookie) {
       console.log("Prexisting session without a cookie - removing old session")
-      await urbit.webapi.deleteSession(session)
-      session = await urbit.webapi.getSession(server, this.state.user)
+      await urbit.deleteSession(session)
+      session = await urbit.getSession(server, this.state.user)
       if (!session) {
         this.setState({
           formError: "Failed to connect",
@@ -69,7 +69,7 @@ export default class Login extends React.Component {
       }
     }
 
-    var result = await urbit.webapi.authenticate(session, this.state.code)
+    var result = await urbit.authenticate(session, this.state.code)
     if (result) {
       this.setState({ formError: "", submitted: false })
       //TODO secure store for cookie

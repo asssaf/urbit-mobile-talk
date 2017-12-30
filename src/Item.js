@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import Message from './Message';
-import { formatShip, getPorchStation } from './urbit-utils';
-import { formatTime, formatAudience, getAvatarUrl, truncate } from './formatting'
+import { client as hall } from '@asssaf/urbit-hall-client';
+import { formatTime, formatShip, formatAudience, getAvatarUrl, truncate } from './formatting'
 
 
 export default class Item extends React.Component {
@@ -13,9 +13,9 @@ export default class Item extends React.Component {
   renderItem(messages) {
     var firstMessage = messages[0]
     var avatarUrl = getAvatarUrl(firstMessage)
-    var sender = formatShip(firstMessage.gam.aut, this.props.expanded !== true)
-    var audience = formatAudience(firstMessage.gam.aud, this.props.expanded !== true)
-    var time = formatTime(new Date(firstMessage.gam.wen), this.props.expanded !== true)
+    var sender = formatShip(firstMessage.sender, this.props.expanded !== true)
+    var audience = formatAudience(firstMessage.audience, this.props.expanded !== true)
+    var time = formatTime(new Date(firstMessage.date), this.props.expanded !== true)
 
     var renderedMessages = []
     for (var i = 0; i < messages.length; ++i) {
@@ -35,19 +35,19 @@ export default class Item extends React.Component {
             <View style={headerStyle}>
               <TouchableOpacity
                 disabled={!this.props.onSenderPress}
-                onPress={() => this.props.onSenderPress([ getPorchStation(firstMessage.gam.aut) ])}
+                onPress={() => this.props.onSenderPress([ hall.getInboxStation(firstMessage.sender) ])}
               >
                 <Text style={styles.sender}>~{sender}</Text>
               </TouchableOpacity>
               <Text style={styles.timestamp}>{time}</Text>
               <TouchableOpacity
                 disabled={!this.props.onAudiencePress}
-                onPress={() => this.props.onAudiencePress(firstMessage.gam.aud)}
+                onPress={() => this.props.onAudiencePress(firstMessage.audience)}
               >
                 <Text style={styles.audience}>{audience}</Text>
               </TouchableOpacity>
               {this.props.expanded === true &&
-                <Text style={styles.audience}>{firstMessage.gam.uid}</Text>
+                <Text style={styles.audience}>{firstMessage.key}</Text>
               }
             </View>
             {this.props.expanded !== true &&
@@ -69,7 +69,7 @@ export default class Item extends React.Component {
   renderItemMessage(message) {
     return (
       <TouchableOpacity
-          key={message.gam.uid}
+          key={message.key}
           disabled={this.props.expanded === true}
           onPress={() => this.props.onMessagePress(message)}>
         <Message message={message} expanded={this.props.expanded} />

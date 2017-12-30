@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DrawerNavigator, NavigationActions, StackNavigator } from 'react-navigation';
-import urbit from '@asssaf/urbit';
+import { webapi as urbit } from '@asssaf/urbit';
 import Login from './Login';
 import LoadingScreen from './LoadingScreen';
 import Chat from './Chat';
@@ -9,7 +9,7 @@ import ChatMenu from './ChatMenu';
 import ViewMessage from './ViewMessage'
 import ViewLog from './ViewLog';
 import { } from './utils';
-import { formatShip } from './urbit-utils'
+import { formatShip } from './formatting'
 import { loadState, saveState } from './persistence'
 
 const ChatNavigator = StackNavigator({
@@ -118,7 +118,7 @@ export default class Main extends React.Component {
       server = 'https://' + this.state.user + '.urbit.org'
     }
 
-    var session = await urbit.webapi.getSession(
+    var session = await urbit.getSession(
           server, this.state.user, this.state.cookie)
 
     this.setState({ loading: false })
@@ -147,7 +147,7 @@ export default class Main extends React.Component {
   }
 
   async doLogout() {
-    var res = await urbit.webapi.deleteSession(this.state.session)
+    var res = await urbit.deleteSession(this.state.session)
     if (!res) {
       console.log("Failed to logout")
     }
