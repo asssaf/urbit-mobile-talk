@@ -22,6 +22,27 @@ Alternatively, you can copy this link to your clipboard and choose 'Open from Cl
 $ npm start
 ```
 
+## Login to your urbit with QR
+Instead of typing your ship name and code (and optionally a custom server) you can scan a QR code from the login screen.
+
+The QR code is expected to contain a JSON object with `user`, `code` and `server` properties (all optional).
+
+For example:
+```json
+{
+  "user": "zod",
+  "code": "...",
+  "server": "https://zod.urbit.org"
+}
+```
+
+You can generate the code from your favorite generator. For example with qrencode:
+
+```bash
+$ qrencode -t png -o code.png '{"user": "zod", "code": "..."}'
+$ display code.png
+```
+
 ---
 below here are the original instructions for create-react-native-app
 
