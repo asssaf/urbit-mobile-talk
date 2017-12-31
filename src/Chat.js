@@ -24,6 +24,7 @@ export default class Chat extends React.Component {
     audience: null,
     items: [],
     inChannel: false,
+    loading: true,
     refreshing: false,
     firstItem: -1,
     lastItem: -1,
@@ -161,18 +162,18 @@ export default class Chat extends React.Component {
         }
 
         this.setState({ items: updatedItems })
-      }
 
-      var firstItem = 0
-      if (messages.length > 0) {
-        firstItem = messages[0].num
-      }
-      if ((this.state.firstItem == -1 || firstItem < this.state.firstItem)) {
-        this.setState({ firstItem: firstItem })
+        var firstItem = messages[0].num
+        if ((this.state.firstItem == -1 || firstItem < this.state.firstItem)) {
+          this.setState({ firstItem: firstItem })
+        }
       }
 
       if (isRefresh) {
         this.setState({ refreshing: false })
+
+      } else {
+        this.setState({ loading: false })
       }
     }
   }
@@ -258,7 +259,7 @@ export default class Chat extends React.Component {
   }
 
   async refresh() {
-    if (this.state.firstItem == 0 || this.state.refreshing) {
+    if (this.state.firstItem <= 0 || this.state.refreshing || this.state.loading) {
       return
     }
 
@@ -326,7 +327,7 @@ export default class Chat extends React.Component {
   }
 
   render() {
-    if (this.state.firstItem == -1) {
+    if (this.state.loading) {
       return (
         <Loading
           statusMessage='Loading messages...'
