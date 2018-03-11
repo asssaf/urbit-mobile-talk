@@ -4,9 +4,9 @@
 
 React-native frontend for urbit talk
 
-Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native-chat-tutorial).
+Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native-chat-tutorial) for the app and [urbit-hall-client-js](https://github.com/asssaf/urbit-hall-client-js) and [urbit-js](https://github.com/asssaf/urbit-js) for interfacing with urbit.
 
-**Disclaimer**: This was built for my personal use, use at your own risk. I don't have time to properly maintain it. That being said, pull requests are welcome. 
+**Disclaimer**: This was built for my personal use, use at your own risk. I don't have time to properly maintain it. That being said, pull requests are welcome. Tested primarily on android.
 
 
 ## Running the published app
