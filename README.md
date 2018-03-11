@@ -1,4 +1,4 @@
-<img align="right" alt="demo" width="250" src="doc/demo.png" />
+<img align="right" alt="demo" width="280" src="doc/demo.png" />
 
 # ![Urbit Mobile Talk](doc/urbit-mobile-talk-logo.png)
 
