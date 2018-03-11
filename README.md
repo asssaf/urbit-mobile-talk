@@ -6,6 +6,9 @@ React-native frontend for urbit talk
 
 Based on [react-native-chat-tutorial](https://github.com/jevakallio/react-native-chat-tutorial).
 
+**Disclaimer**: This was built for my personal use, use at your own risk. I don't have time to properly maintain it. That being said, pull requests are welcome. 
+
+
 ## Running the published app
 ### Using the Expo app
 Download and install the [Expo Client app](https://expo.io/tools#client) for [iOS](https://itunes.apple.com/app/apple-store/id982107779?ct=www&mt=8)/[android](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www). Scan the QR code below in the Expo client app:
