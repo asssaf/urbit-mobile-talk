@@ -12,9 +12,11 @@ export default class Message extends React.Component {
     var linkOrText
     var text = message.text
     var attachment = message.attachment
+    var attachmentLabel = message.attachmentLabel
     if (this.props.expanded !== true) {
       text = truncate(text, 256)
       attachment = truncate(attachment, 256)
+      attachmentLabel = truncate(attachmentLabel, 256)
     }
 
     if (message.type == 'url') {
@@ -33,6 +35,9 @@ export default class Message extends React.Component {
     return (
       <View key={message['key']}>
         {linkOrText}
+        {attachmentLabel &&
+          <Text style={styles.attachmentLabel}>{attachmentLabel}</Text>
+        }
         {attachment &&
           <View style={styles.attachment}>
             <Text selectable={true}>{attachment}</Text>
@@ -51,6 +56,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
     marginBottom: 10,
+  },
+  attachmentLabel: {
+    fontSize: 16,
   },
   message: {
     fontSize: 16,
