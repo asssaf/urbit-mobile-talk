@@ -2,7 +2,10 @@
   "expo": {
     "name": "Urbit Mobile Talk",
     "icon": "./assets/images/urbit-mobile-talk.png",
-    "version": "0.15.2",
+    "androidStatusBar": {
+      "backgroundColor": "#000000"
+    },
+    "version": "0.15.3",
     "slug": "urbit-mobile-talk",
     "sdkVersion": "32.0.0",
     "platforms": [

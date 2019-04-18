@@ -32,9 +32,12 @@ const ChatNavigator = createStackNavigator({
   initialRouteParams: {
     statusMessage: 'Loading...',
   },
-  navigationOptions: {
+  defaultNavigationOptions: {
     headerTintColor: 'white',
-    headerStyle: { backgroundColor: 'lightseagreen' },
+    headerStyle: {
+      backgroundColor: 'lightseagreen',
+      marginTop: -Expo.Constants.statusBarHeight,
+    },
   },
 })
 
@@ -173,9 +176,6 @@ export default class Main extends React.Component {
           this.navigator = nav;
         }}
         screenProps={screenProps}>
-        <View style={styles.container}>
-        <View style={styles.header} />
-        </View>
       </AppContainer>
     )
   }
@@ -185,9 +185,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  header: {
-    height: Expo.Constants.statusBarHeight,
-    backgroundColor: 'lightseagreen',
   },
 });
