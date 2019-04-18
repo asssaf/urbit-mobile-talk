@@ -1,3 +1,4 @@
+import { Updates } from 'expo';
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { formatShip } from './formatting';
@@ -30,7 +31,7 @@ export default class ChatMenu extends React.Component {
   }
 
   doReload() {
-    Expo.Util.reload()
+    Updates.reload()
   }
 
   render() {

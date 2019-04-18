@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, FlatList, TextInput, KeyboardAvoidingView,
-    TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState } from 'react-native';
+    TouchableOpacity, Image, AsyncStorage, Alert, Linking, AppState, Platform } from 'react-native';
 import Autolink from 'react-native-autolink';
 import { Notifications } from 'expo';
 import { client as hall } from '@asssaf/urbit-hall-client';
@@ -14,7 +14,7 @@ import { formatTime, formatShip, formatAudience, getAvatarUrl } from './formatti
 export default class Chat extends React.Component {
   static navigationOptions = ({ navigation }) => ({
     title: `${navigation.state.params.title}`,
-    headerRight: <ToolBar onLogout={navigation.state.params.onLogout} onMenu={() => navigation.navigate('DrawerOpen')} />,
+    headerRight: <ToolBar onLogout={navigation.state.params.onLogout} onMenu={navigation.openDrawer} />,
   })
 
   state = {
@@ -347,7 +347,7 @@ export default class Chat extends React.Component {
           onRefresh={this.refresh.bind(this)}
         />
 
-        <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={80}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.footer}>
             <View style={styles.footerAudience}>
               <TextInput

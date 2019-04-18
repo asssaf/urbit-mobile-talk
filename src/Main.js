@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { DrawerNavigator, NavigationActions, StackNavigator } from 'react-navigation';
+import { createAppContainer, createDrawerNavigator, NavigationActions, StackActions, createStackNavigator } from 'react-navigation';
 import { webapi as urbit } from '@asssaf/urbit';
 import Login from './Login';
 import LoadingScreen from './LoadingScreen';
@@ -12,7 +12,7 @@ import { } from './utils';
 import { formatShip } from './formatting'
 import { loadState, saveState } from './persistence'
 
-const ChatNavigator = StackNavigator({
+const ChatNavigator = createStackNavigator({
   Loading: {
     screen: LoadingScreen,
   },
@@ -32,19 +32,23 @@ const ChatNavigator = StackNavigator({
   initialRouteParams: {
     statusMessage: 'Loading...',
   },
-  navigationOptions: {
+  defaultNavigationOptions: {
     headerTintColor: 'white',
-    headerStyle: { backgroundColor: 'lightseagreen' },
+    headerStyle: {
+      backgroundColor: 'lightseagreen',
+      marginTop: -Expo.Constants.statusBarHeight,
+    },
   },
 })
 
-const MenuNavigator = DrawerNavigator({
+const MenuNavigator = createDrawerNavigator({
   Chat: {
     screen: ChatNavigator,
   },
 }, {
   contentComponent: ChatMenu,
 })
+const AppContainer = createAppContainer(MenuNavigator, ChatNavigator);
 
 export default class Main extends React.Component {
   state = {
@@ -64,7 +68,7 @@ export default class Main extends React.Component {
   }
 
   switchToLogin() {
-    var action = NavigationActions.reset({
+    var action = StackActions.reset({
       index: 0,
       actions: [
         NavigationActions.navigate({
@@ -80,7 +84,7 @@ export default class Main extends React.Component {
   }
 
   switchToChat() {
-    var action = NavigationActions.reset({
+    var action = StackActions.reset({
       index: 0,
       actions: [
         NavigationActions.navigate({
@@ -167,10 +171,12 @@ export default class Main extends React.Component {
     }
 
     return (
-      <View style={styles.container}>
-        <View style={styles.header} />
-        <MenuNavigator screenProps={screenProps} ref={(nav) => {this.navigator = nav; } } />
-      </View>
+      <AppContainer
+        ref={nav => {
+          this.navigator = nav;
+        }}
+        screenProps={screenProps}>
+      </AppContainer>
     )
   }
 }
@@ -179,9 +185,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  header: {
-    height: Expo.Constants.statusBarHeight,
-    backgroundColor: 'lightseagreen',
   },
 });
