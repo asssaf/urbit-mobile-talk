@@ -64,9 +64,13 @@ export default class Chat extends React.Component {
     var from
     if (this.state.lastItem > -1) {
       from = hall.formatNumber(this.state.lastItem + 1)
+
+    } else {
+      // start with latest 64 messages
+      from = "-64"
     }
 
-    var res = await hall.subscribe(this.state.session, wire, (wire, data) => this.handleMessages(wire, data))
+    var res = await hall.subscribe(this.state.session, wire, (wire, data) => this.handleMessages(wire, data), from)
 
     if (res) {
       this.setState({ inChannel: true })
