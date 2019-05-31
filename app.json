@@ -5,7 +5,7 @@
     "androidStatusBar": {
       "backgroundColor": "#000000"
     },
-    "version": "0.15.4",
+    "version": "0.15.5",
     "slug": "urbit-mobile-talk",
     "sdkVersion": "32.0.0",
     "platforms": [

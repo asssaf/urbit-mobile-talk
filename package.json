@@ -13,8 +13,8 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
-    "@asssaf/urbit": "^0.1.4",
-    "@asssaf/urbit-hall-client": "^0.1.3",
+    "@asssaf/urbit": "^0.1.5",
+    "@asssaf/urbit-hall-client": "^0.1.4",
     "expo": "^32.0.0",
     "react": "16.5.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-32.0.0.tar.gz",
